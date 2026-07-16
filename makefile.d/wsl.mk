@@ -1,4 +1,4 @@
-$(eval $(call include_local_env))
+-include makefile.d/.env
 
 SHELL := /bin/bash
 

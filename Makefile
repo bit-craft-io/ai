@@ -4,10 +4,7 @@ SHELL := /bin/bash
 # ========================================
 # include
 # ----------------------------------------
-define include_local_env
-  $(eval LOCAL_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-  -include $(LOCAL_DIR).env
-endef
+-include .env
 include makefile.d/dify.mk
 include makefile.d/wsl.mk
 include makefile.d/python.mk
@@ -36,8 +33,12 @@ menu:
 	if [ "$$g_num" -eq 1 ] 2>/dev/null; then echo "Exit"; exit 0; fi; \
 	\
 	idx=$$(($$g_num - 1)); \
-	selected_g=$$(echo "$$MENU_GROUPS" | sed -n "$${idx}p"); \
-	if [ -z "$$selected_g" ]; then echo "Invalid group"; exit 1; fi; \
+	#selected_g=$$(echo "$$MENU_GROUPS" | sed -n "$${idx}p"); \
+	selected_g=$$(echo "$$MENU_GROUPS" | sed -n "$${idx}p" 2>/dev/null); \
+	if [ -z "$$selected_g" ]; then \
+		echo "Invalid group"; \
+		exit 0; \
+	fi; \
 	\
 	echo "--- Select Task [$$selected_g] ---"; \
 	echo " 1) _back"; \
@@ -55,12 +56,14 @@ menu:
 	if [ "$$t_num" -eq 1 ] 2>/dev/null; then exec make --no-print-directory menu; fi; \
 	\
 	t_idx=$$(($$t_num - 1)); \
-	selected_t=$$(echo "$$SUB_TASKS" | sed -n "$${t_idx}p"); \
+	#selected_t=$$(echo "$$SUB_TASKS" | sed -n "$${t_idx}p"); \
+	selected_t=$$(echo "$$SUB_TASKS" | sed -n "$${t_idx}p" 2>/dev/null); \
 	if [ -n "$$selected_t" ]; then \
 		# 【重要】一切のリダイレクトやパイプを通さず生で実行し、警告自体は MAKEFLAGS で抑制する \
 		MAKEFLAGS="--no-print-directory" make $$selected_t; \
 	else \
 		echo "Invalid task"; \
+		exit 0; \
 	fi
 
 .DEFAULT:
