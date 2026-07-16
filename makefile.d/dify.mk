@@ -1,4 +1,4 @@
-$(eval $(call include_local_env))
+-include makefile.d/.env
 
 SHELL := /bin/bash
 
@@ -19,22 +19,17 @@ TASKS += \
 # ----------------------------------------
 .PHONY: dify-git-pull
 dify-git-pull:
-	@if [ ! -d "dify/.git" ]; then \
+	@if [ ! -d "dify/docker" ]; then \
 		echo "repository clone dify"; \
 		git clone --branch 1.15.0 --depth 1 https://github.com/langgenius/dify.git dify; \
+		yes | rm -r ./dify/.git; \
+		echo "make .env from .env.example"; \
+		cp dify/docker/.env.example dify/docker/.env; \
+		echo "make .env from .env.example with custom project name"; \
+		echo "COMPOSE_PROJECT_NAME=sandbox" >> dify/docker/.env; \
+		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> dify/docker/.env; \
 	else \
-		echo "exist dify clone skip"; \
-	fi
-	@if [ -d "dify/docker" ]; then \
-		if [ ! -f "dify/docker/.env" ]; then \
-			echo "make .env from .env.example"; \
-			cp dify/docker/.env.example dify/docker/.env; \
-			echo "make .env from .env.example with custom project name"; \
-			echo "COMPOSE_PROJECT_NAME=sandbox" >> dify/docker/.env; \
-			echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> dify/docker/.env; \
-		else \
-			echo "exist dify make skip"; \
-		fi \
+		echo "exist dify make skip"; \
 	fi
 
 .PHONY: dify-git-dell
