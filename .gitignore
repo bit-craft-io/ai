@@ -1,0 +1,5 @@
+.idea
+.venv
+dify
+backup/history/
+backup/latest
