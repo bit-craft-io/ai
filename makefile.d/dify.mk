@@ -22,7 +22,9 @@ dify-git-pull:
 	@if [ ! -d "dify/docker" ]; then \
 		echo "repository clone dify"; \
 		git clone --branch 1.15.0 --depth 1 https://github.com/langgenius/dify.git dify; \
-		yes | rm -r ./dify/.git; \
+		yes | rm -r dify/.git; \
+		yes | rm -r dify/.gemini; \
+		yes | rm -r dify/.github; \
 		echo "make .env from .env.example"; \
 		cp dify/docker/.env.example dify/docker/.env; \
 		echo "make .env from .env.example with custom project name"; \
