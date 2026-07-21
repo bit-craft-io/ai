@@ -1,10 +1,4 @@
 services:
-  voicevox:
-    image: voicevox/voicevox_engine:cpu-latest
-    ports:
-      - "50021:50021"
-    networks:
-      - dify_default
   ollama-base:
     image: ollama/ollama:latest
     container_name: ollama-base
@@ -17,7 +11,7 @@ services:
       - "11434:11434"
     volumes:
       - ~/.ollama:/root/.ollama
-      - ./ollama/entrypoint.sh:/entrypoint.sh
+      - ./entrypoint.sh:/entrypoint.sh
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     deploy:
       resources:
@@ -28,7 +22,7 @@ services:
               capabilities: [gpu]
     restart: always
     networks:
-      - dify_default
+      - ollama_default
   ollama-proxy:
     image: ghcr.io/berriai/litellm:main-latest
     container_name: ollama-proxy
@@ -42,12 +36,10 @@ services:
     command: --model ollama_chat/${__OLLAMA_MODEL} --alias ${__OLLAMA_MODEL} --port 4000
     restart: always
     networks:
-      - dify_default
-
+      - ollama_default
 networks:
-  dify_default:
-    name: sandbox_default
-    external: true
+  ollama_default:
+    driver: bridge
 
 volumes:
   open-webui:
