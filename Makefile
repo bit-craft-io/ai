@@ -4,7 +4,6 @@ SHELL := /bin/bash
 # ========================================
 # include
 # ----------------------------------------
--include .env
 include makefile.d/wsl.mk
 include makefile.d/docker.mk
 include makefile.d/dify.mk
@@ -72,37 +71,6 @@ menu:
 	else \
 		echo "Invalid task"; \
 		exit 0; \
-	fi
-
-# ========================================
-# docker
-# ----------------------------------------
-.PHONY: docker-up
-docker-up:
-	@docker network inspect sandbox >/dev/null 2>&1 || docker network create sandbox
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -p dify -f dify/docker/docker-compose.yaml -f override.d/dify/docker-compose.override.yaml up -d; \
-	fi
-	@if [ -f "crawl/docker-compose.yaml" ]; then \
-		docker compose -p crawl -f crawl/docker-compose.yaml -f override.d/crawl/docker-compose.override.yaml up -d; \
-	fi
-	@if [ -f "ollama/docker-compose.yaml" ]; then \
-		docker compose -p ollama -f ollama/docker-compose.yaml -f override.d/ollama/docker-compose.override.yaml up -d; \
-	fi
-	@if [ -f "voicevox/docker-compose.yaml" ]; then \
-		docker compose -p voicevox -f voicevox/docker-compose.yaml -f override.d/voicevox/docker-compose.override.yaml up -d; \
-	fi
-
-.PHONY: docker-down
-docker-down:
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -f ./dify/docker/docker-compose.yaml down; \
-	fi
-	@if [ -f "ollama/docker-compose.yaml" ]; then \
-		docker compose -f ./ollama/docker-compose.yaml down; \
-	fi
-	@if [ -f "crawl/docker-compose.yaml" ]; then \
-		docker compose -f ./crawl/docker-compose.yaml down; \
 	fi
 
 .DEFAULT:

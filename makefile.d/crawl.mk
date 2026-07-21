@@ -3,6 +3,11 @@ export
 SHELL := /bin/bash
 
 # ========================================
+# crawl ルートパス
+# ----------------------------------------
+__CRAWL_ROOT := docker/crawl
+
+# ========================================
 # menu
 # ----------------------------------------
 TASKS += \
@@ -15,10 +20,10 @@ TASKS += \
 # ----------------------------------------
 .PHONY: crawl-git-pull
 crawl-git-pull:
-	@if [ ! -d "crawl" ]; then \
+	@if [ ! -d "$(__CRAWL_ROOT)" ]; then \
 		echo "repository clone crawl"; \
-		git clone --branch v2.11.0 --depth 1 https://github.com/firecrawl/firecrawl crawl; \
-		yes | rm -r crawl/.github; \
+		git clone --branch v2.11.0 --depth 1 https://github.com/firecrawl/firecrawl $(__CRAWL_ROOT); \
+		yes | rm -r $(__CRAWL_ROOT)/.github; \
 	else \
 		echo "exist crawl make skip"; \
 	fi
@@ -31,19 +36,7 @@ crawl-git-dell:
 		echo "Cancelled."; \
 		exit 0; \
 	fi; \
-	if [ -f "crawl/docker-compose.yaml" ]; then \
-		docker compose -f ./crawl/docker-compose.yaml down -v; \
+	if [ -f "$(__CRAWL_ROOT)/docker-compose.yaml" ]; then \
+		docker compose -f $(__CRAWL_ROOT)/docker-compose.yaml down -v; \
 	fi; \
-	sudo rm -rf ./crawl
-
-#.PHONY: crawl-docker-up
-#crawl-docker-up:
-#	@if [ -f "crawl/docker-compose.yaml" ]; then \
-#		docker compose -f ./crawl/docker-compose.yaml up -d; \
-#	fi
-#
-#.PHONY: crawl-docker-down
-#crawl-docker-down:
-#	@if [ -f "crawl/docker-compose.yaml" ]; then \
-#		docker compose -f ./crawl/docker-compose.yaml down; \
-#	fi
+	sudo rm -rf $(__CRAWL_ROOT)
