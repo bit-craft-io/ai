@@ -45,7 +45,6 @@ services:
       - dify_default
 
 networks:
-  # ここを外部のDify側のネットワークを指すように定義するんや、シランケド
   dify_default:
     name: sandbox_default
     external: true

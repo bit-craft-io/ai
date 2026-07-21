@@ -1,5 +1,6 @@
 .idea
 .venv
+crawl
 dify
 backup/history/
 backup/latest
