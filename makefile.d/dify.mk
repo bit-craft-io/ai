@@ -1,5 +1,5 @@
 -include makefile.d/.env
-
+export
 SHELL := /bin/bash
 
 # ========================================
@@ -27,9 +27,9 @@ dify-git-pull:
 		yes | rm -r dify/.github; \
 		echo "make .env from .env.example"; \
 		cp dify/docker/.env.example dify/docker/.env; \
-		echo "make .env from .env.example with custom project name"; \
-		echo "COMPOSE_PROJECT_NAME=sandbox" >> dify/docker/.env; \
-		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> dify/docker/.env; \
+#		echo "make .env from .env.example with custom project name"; \
+#		echo "COMPOSE_PROJECT_NAME=sandbox" >> dify/docker/.env; \
+#		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> dify/docker/.env; \
 	else \
 		echo "exist dify make skip"; \
 	fi
@@ -46,23 +46,22 @@ dify-git-dell:
 	# 同意した場合のみ以下を実行 \
 	if [ -f "dify/docker/docker-compose.yaml" ]; then \
 		docker compose -f ./dify/docker/docker-compose.yaml down -v; \
-		docker compose -f ./docker-compose.yaml down -v; \
 	fi; \
 	sudo rm -rf ./dify
 
-.PHONY: dify-docker-up
-dify-docker-up:
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -f ./dify/docker/docker-compose.yaml up -d; \
-		docker compose -f ./docker-compose.yaml up -d; \
-	fi
-
-.PHONY: dify-docker-down
-dify-docker-down:
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -f ./dify/docker/docker-compose.yaml down; \
-		docker compose -f ./docker-compose.yaml down; \
-	fi
+#.PHONY: dify-docker-up
+#dify-docker-up:
+#	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
+#		docker compose -f ./dify/docker/docker-compose.yaml up -d; \
+#		docker compose -f ./docker-compose.yaml up -d; \
+#	fi
+#
+#.PHONY: dify-docker-down
+#dify-docker-down:
+#	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
+#		docker compose -f ./dify/docker/docker-compose.yaml down; \
+#		docker compose -f ./docker-compose.yaml down; \
+#	fi
 
 # ========================================
 # Dify バックアップ / リストア
