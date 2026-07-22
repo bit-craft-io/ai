@@ -1,7 +1,5 @@
 .idea
 .venv
-crawl
-dify
 docker/crawl
 docker/dify
 backup/history/
