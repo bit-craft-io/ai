@@ -1,4 +1,4 @@
--include makefile.d/.env
+-include make.d/.env
 export
 SHELL := /bin/bash
 
@@ -7,7 +7,8 @@ SHELL := /bin/bash
 # ----------------------------------------
 TASKS += \
 	docker-up \
-	docker-down
+	docker-down \
+	docker-clean
 
 # ========================================
 # docker
@@ -51,15 +52,63 @@ docker-up:
 .PHONY: docker-down
 docker-down:
 	@docker network rm sandbox 2>/dev/null || true
+
 	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -f ./dify/docker/docker-compose.yaml down; \
+		docker compose \
+			-f $(__DIFY_ROOT)/docker/docker-compose.yaml \
+			down; \
 	fi
+
 	@if [ -f "crawl/docker-compose.yaml" ]; then \
-  		docker compose -f ./crawl/docker-compose.yaml down; \
+		docker compose \
+			-f $(__CRAWL_ROOT)/docker-compose.yaml \
+			down; \
   	fi
+
 	@if [ -f "ollama/docker-compose.yaml" ]; then \
-		docker compose -f ./ollama/docker-compose.yaml down; \
+		docker compose \
+			-f $(__OLLAMA_ROOT)/docker-compose.yaml \
+			down; \
 	fi
+
+	@if [ -f "voicevox/docker-compose.yaml" ]; then \
+		docker compose \
+			-f $(__VOICEVOX_ROOT)/docker-compose.yaml \
+			down; \
+	fi
+
+.PHONY: docker-clean
+docker-clean:
+	@read -p "docker compose down -v [y/N]: " ans; \
+	@if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
+		echo "Cancelled."; \
+		exit 0; \
+	fi
+
+	@docker network rm sandbox 2>/dev/null || true
+
+	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
+		docker compose \
+			-f $(__DIFY_ROOT)/docker/docker-compose.yaml \
+			down -v; \
+	fi
+
+	@if [ -f "crawl/docker-compose.yaml" ]; then \
+		docker compose \
+			-f $(__CRAWL_ROOT)/docker-compose.yaml \
+			down -v; \
+  	fi
+
+	@if [ -f "ollama/docker-compose.yaml" ]; then \
+		docker compose \
+			-f $(__OLLAMA_ROOT)/docker-compose.yaml \
+			down -v; \
+	fi
+
 	@if [ -f "voicevox/docker-compose.yaml" ]; then \
 		docker compose -f ./voicevox/docker-compose.yaml down; \
+		docker compose \
+			-f $(__VOICEVOX_ROOT)/docker-compose.yaml \
+			down -v; \
 	fi
+
