@@ -67,12 +67,14 @@ docker-down:
 
 	@if [ -f "$(__OLLAMA_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
+			--env-file make.d/.env \
 			-f $(__OLLAMA_ROOT)/docker-compose.yaml \
 			down; \
 	fi
 
 	@if [ -f "$(__VOICEVOX_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
+			--env-file make.d/.env \
 			-f $(__VOICEVOX_ROOT)/docker-compose.yaml \
 			down; \
 	fi
@@ -101,12 +103,14 @@ docker-clean:
 
 	@if [ -f "$(__OLLAMA_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
+			--env-file make.d/.env \
 			-f $(__OLLAMA_ROOT)/docker-compose.yaml \
 			down -v; \
 	fi
 
 	@if [ -f "$(__VOICEVOX_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
+			--env-file make.d/.env \
 			-f $(__VOICEVOX_ROOT)/docker-compose.yaml \
 			down -v; \
 	fi
