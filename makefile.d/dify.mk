@@ -24,7 +24,7 @@ TASKS += \
 # ----------------------------------------
 .PHONY: dify-git-pull
 dify-git-pull:
-	@if [ ! -d "$(__DIFY_ROOT)/docker" ]; then \
+	@if [ ! -d "$(__DIFY_ROOT)" ]; then \
 		echo "repository clone dify"; \
 		git clone --branch 1.15.0 --depth 1 https://github.com/langgenius/dify.git $(__DIFY_ROOT); \
 		yes | rm -r $(__DIFY_ROOT)/.git; \
