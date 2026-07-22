@@ -53,25 +53,25 @@ docker-up:
 docker-down:
 	@docker network rm sandbox 2>/dev/null || true
 
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
+	@if [ -f "$(__DIFY_ROOT)/docker/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__DIFY_ROOT)/docker/docker-compose.yaml \
 			down; \
 	fi
 
-	@if [ -f "crawl/docker-compose.yaml" ]; then \
+	@if [ -f "$(__CRAWL_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__CRAWL_ROOT)/docker-compose.yaml \
 			down; \
   	fi
 
-	@if [ -f "ollama/docker-compose.yaml" ]; then \
+	@if [ -f "$(__OLLAMA_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__OLLAMA_ROOT)/docker-compose.yaml \
 			down; \
 	fi
 
-	@if [ -f "voicevox/docker-compose.yaml" ]; then \
+	@if [ -f "$(__VOICEVOX_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__VOICEVOX_ROOT)/docker-compose.yaml \
 			down; \
@@ -87,26 +87,25 @@ docker-clean:
 
 	@docker network rm sandbox 2>/dev/null || true
 
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
+	@if [ -f "$(__DIFY_ROOT)/docker/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__DIFY_ROOT)/docker/docker-compose.yaml \
 			down -v; \
 	fi
 
-	@if [ -f "crawl/docker-compose.yaml" ]; then \
+	@if [ -f "$(__CRAWL_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__CRAWL_ROOT)/docker-compose.yaml \
 			down -v; \
   	fi
 
-	@if [ -f "ollama/docker-compose.yaml" ]; then \
+	@if [ -f "$(__OLLAMA_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__OLLAMA_ROOT)/docker-compose.yaml \
 			down -v; \
 	fi
 
-	@if [ -f "voicevox/docker-compose.yaml" ]; then \
-		docker compose -f ./voicevox/docker-compose.yaml down; \
+	@if [ -f "$(__VOICEVOX_ROOT)/docker-compose.yaml" ]; then \
 		docker compose \
 			-f $(__VOICEVOX_ROOT)/docker-compose.yaml \
 			down -v; \
