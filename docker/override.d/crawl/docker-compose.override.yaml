@@ -1,0 +1,11 @@
+# docker-compose.override.yaml
+services:
+  api:
+    networks:
+      - default
+      - sandbox
+
+networks:
+  sandbox:
+    external: true
+    name: sandbox

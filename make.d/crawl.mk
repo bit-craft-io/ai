@@ -1,4 +1,4 @@
--include makefile.d/.env
+-include make.d/.env
 export
 SHELL := /bin/bash
 
@@ -35,8 +35,5 @@ crawl-git-dell:
 	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
 		echo "Cancelled."; \
 		exit 0; \
-	fi; \
-	if [ -f "$(__CRAWL_ROOT)/docker-compose.yaml" ]; then \
-		docker compose -f $(__CRAWL_ROOT)/docker-compose.yaml down -v; \
 	fi; \
 	sudo rm -rf $(__CRAWL_ROOT)
