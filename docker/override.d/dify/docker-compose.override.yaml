@@ -1,0 +1,12 @@
+# docker-compose.override.yaml
+services:
+  api:
+    networks:
+      - default
+      - ssrf_proxy_network
+      - sandbox
+
+networks:
+  sandbox:
+    external: true
+    name: sandbox
