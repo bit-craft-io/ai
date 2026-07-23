@@ -19,17 +19,17 @@ TASKS += \
 # ----------------------------------------
 .PHONY: dify-git-pull
 dify-git-pull:
-	@if [ ! -d "$(__DIFY_ROOT)" ]; then \
+	@if [ ! -d "$(__DOCKER_ROOT_DIFY)" ]; then \
 		echo "repository clone dify"; \
-		git clone --branch 1.15.0 --depth 1 https://github.com/langgenius/dify.git $(__DIFY_ROOT); \
-		yes | rm -r $(__DIFY_ROOT)/.git; \
-		yes | rm -r $(__DIFY_ROOT)/.gemini; \
-		yes | rm -r $(__DIFY_ROOT)/.github; \
+		git clone --branch 1.15.0 --depth 1 https://github.com/langgenius/dify.git $(__DOCKER_ROOT_DIFY); \
+		yes | rm -r $(__DOCKER_ROOT_DIFY)/.git; \
+		yes | rm -r $(__DOCKER_ROOT_DIFY)/.gemini; \
+		yes | rm -r $(__DOCKER_ROOT_DIFY)/.github; \
 		echo "make .env from .env.example"; \
-		cp $(__DIFY_ROOT)/docker/.env.example $(__DIFY_ROOT)/docker/.env; \
+		cp $(__DOCKER_ROOT_DIFY)/docker/.env.example $(__DOCKER_ROOT_DIFY)/docker/.env; \
 		echo "make .env from .env.example with custom project name"; \
-		echo "COMPOSE_PROJECT_NAME=dify" >> $(__DIFY_ROOT)/docker/.env; \
-#		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> $(__DIFY_ROOT)/docker/.env; \
+		echo "COMPOSE_PROJECT_NAME=dify" >> $(__DOCKER_ROOT_DIFY)/docker/.env; \
+#		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> $(__DOCKER_ROOT_DIFY)/docker/.env; \
 	else \
 		echo "exist dify make skip"; \
 	fi
@@ -42,7 +42,7 @@ dify-git-dell:
 		echo "Cancelled."; \
 		exit 0; \
 	fi; \
-	sudo rm -rf $(__DIFY_ROOT)
+	sudo rm -rf $(__DOCKER_ROOT_DIFY)
 
 # ========================================
 # Dify バックアップ / リストア
