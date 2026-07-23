@@ -1,5 +1,5 @@
--include makefile.d/.env
-
+-include make.d/.env
+export
 SHELL := /bin/bash
 
 # ========================================
@@ -19,17 +19,17 @@ TASKS += \
 # ----------------------------------------
 .PHONY: dify-git-pull
 dify-git-pull:
-	@if [ ! -d "dify/docker" ]; then \
+	@if [ ! -d "$(__DIFY_ROOT)" ]; then \
 		echo "repository clone dify"; \
-		git clone --branch 1.15.0 --depth 1 https://github.com/langgenius/dify.git dify; \
-		yes | rm -r dify/.git; \
-		yes | rm -r dify/.gemini; \
-		yes | rm -r dify/.github; \
+		git clone --branch 1.15.0 --depth 1 https://github.com/langgenius/dify.git $(__DIFY_ROOT); \
+		yes | rm -r $(__DIFY_ROOT)/.git; \
+		yes | rm -r $(__DIFY_ROOT)/.gemini; \
+		yes | rm -r $(__DIFY_ROOT)/.github; \
 		echo "make .env from .env.example"; \
-		cp dify/docker/.env.example dify/docker/.env; \
+		cp $(__DIFY_ROOT)/docker/.env.example $(__DIFY_ROOT)/docker/.env; \
 		echo "make .env from .env.example with custom project name"; \
-		echo "COMPOSE_PROJECT_NAME=sandbox" >> dify/docker/.env; \
-		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> dify/docker/.env; \
+		echo "COMPOSE_PROJECT_NAME=dify" >> $(__DIFY_ROOT)/docker/.env; \
+#		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> $(__DIFY_ROOT)/docker/.env; \
 	else \
 		echo "exist dify make skip"; \
 	fi
@@ -42,27 +42,7 @@ dify-git-dell:
 		echo "Cancelled."; \
 		exit 0; \
 	fi; \
-	\
-	# 同意した場合のみ以下を実行 \
-	if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -f ./dify/docker/docker-compose.yaml down -v; \
-		docker compose -f ./docker-compose.yaml down -v; \
-	fi; \
-	sudo rm -rf ./dify
-
-.PHONY: dify-docker-up
-dify-docker-up:
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -f ./dify/docker/docker-compose.yaml up -d; \
-		docker compose -f ./docker-compose.yaml up -d; \
-	fi
-
-.PHONY: dify-docker-down
-dify-docker-down:
-	@if [ -f "dify/docker/docker-compose.yaml" ]; then \
-		docker compose -f ./dify/docker/docker-compose.yaml down; \
-		docker compose -f ./docker-compose.yaml down; \
-	fi
+	sudo rm -rf $(__DIFY_ROOT)
 
 # ========================================
 # Dify バックアップ / リストア

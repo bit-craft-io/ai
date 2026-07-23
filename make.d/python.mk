@@ -1,5 +1,5 @@
--include makefile.d/.env
-
+-include make.d/.env
+export
 SHELL := /bin/bash
 
 # ========================================
