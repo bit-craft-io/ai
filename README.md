@@ -1,4 +1,3 @@
-<style>pre {margin: 6px !important;padding: 6px 8px !important;}</style>
 ## 概要
 - AIエージェント開発・検証のための学習用リポジトリ
 ### 準備
