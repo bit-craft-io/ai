@@ -15,12 +15,12 @@ TASKS += \
 # ----------------------------------------
 .PHONY: crawl-git-pull
 crawl-git-pull:
-	@if [ ! -d "$(__CRAWL_ROOT)" ]; then \
+	@if [ ! -d "$(__DOCKER_ROOT_CRAWL)" ]; then \
 		echo "repository clone crawl"; \
-		git clone --branch v2.11.0 --depth 1 https://github.com/firecrawl/firecrawl $(__CRAWL_ROOT); \
-		yes | rm -r $(__CRAWL_ROOT)/.github; \
+		git clone --branch v2.11.0 --depth 1 https://github.com/firecrawl/firecrawl $(__DOCKER_ROOT_CRAWL); \
+		yes | rm -r $(__DOCKER_ROOT_CRAWL)/.github; \
 		echo "make .env from .env.example"; \
-		cp $(__DIFY_ROOT)/docker/.env.example $(__DIFY_ROOT)/docker/.env; \
+		cp $(__DOCKER_ROOT_DIFY)/docker/.env.example $(__DOCKER_ROOT_DIFY)/docker/.env; \
 	else \
 		echo "exist crawl make skip"; \
 	fi
@@ -33,4 +33,4 @@ crawl-git-dell:
 		echo "Cancelled."; \
 		exit 0; \
 	fi; \
-	sudo rm -rf $(__CRAWL_ROOT)
+	sudo rm -rf $(__DOCKER_ROOT_CRAWL)
