@@ -9,6 +9,7 @@ include make.d/docker.mk
 include make.d/dify.mk
 include make.d/crawl.mk
 include make.d/python.mk
+include make.d/tools.mk
 # ========================================
 # command
 # ----------------------------------------

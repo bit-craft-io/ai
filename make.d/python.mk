@@ -6,26 +6,26 @@ SHELL := /bin/bash
 # menu
 # ----------------------------------------
 TASKS += \
-	py-init \
-	py-setup
+	python-init \
+	python-setup
 # ========================================
 # command
 # ----------------------------------------
 ifndef ROOT_MK_INCLUDED
     ROOT_MK_INCLUDED := 1
-    ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+	ROOT_DIR := $(shell pwd)
     export VENV_PYTHON := $(ROOT_DIR)/.venv/bin/python3
     export VENV_PIP    := $(ROOT_DIR)/.venv/bin/pip
 endif
 
-.PHONY: py-init
-py-init:
+.PHONY: python-init
+python-init:
 	sudo apt update
 	sudo apt install -y python3 python3-pip python3-venv
 	sudo apt install -y portaudio19-dev libpulse0
 
-.PHONY: py-setup
-py-setup:
+.PHONY: python-setup
+python-setup:
 	# 独立した Python 仮想環境（.venv）を作成
 	python3 -m venv .venv
 	# 音声認識・再生・音声合成・HTTPリクエスト用
