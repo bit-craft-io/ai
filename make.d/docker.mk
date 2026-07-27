@@ -13,37 +13,45 @@ TASKS += \
 # ========================================
 # command
 # ----------------------------------------
-# サービス定義: 名称/パス（区切りを半角スペースに変更）
-SERVICES := \
-    dify docker/dify/docker/docker-compose.yaml \
-    crawl docker/crawl/docker-compose.yaml \
-    ollama docker/ollama/docker-compose.yaml \
-    voicevox docker/voicevox/docker-compose.yaml
+DIFY_COMPOSE     := $(__DOCKER_ROOT_DIFY)/docker-compose.yaml
+CRAWL_COMPOSE    := $(__DOCKER_ROOT_CRAWL)/docker-compose.yaml
+OLLAMA_COMPOSE   := $(__DOCKER_ROOT_OLLAMA)/docker-compose.yaml
+VOICEVOX_COMPOSE := $(__DOCKER_ROOT_VOICEVOX)/docker-compose.yaml
+BRIDGE_COMPOSE   := $(__DOCKER_ROOT_BRIDGE)/docker-compose.yaml
+COMMON_ENV       := make.d/.env
+
+# $(1)=project name $(2)=root dir $(3)=compose file $(4)=action(up -d / down)
+define compose_action
+	@if [ -f "$(3)" ]; then \
+		cmd="docker compose -p $(1) --env-file $(COMMON_ENV)"; \
+		[ -f "$(2)/.env" ] && cmd="$$cmd --env-file $(2)/.env"; \
+		cmd="$$cmd -f $(3)"; \
+		[ -f "docker/override.d/$(1)/docker-compose.override.yaml" ] && cmd="$$cmd -f docker/override.d/$(1)/docker-compose.override.yaml"; \
+		$$cmd $(4); \
+	fi
+endef
 
 .PHONY: docker-up
 docker-up:
-	@docker network inspect sandbox >/dev/null 2>&1 || docker network create sandbox || true
-	@set -- $(SERVICES); \
-	while [ $$# -gt 0 ]; do \
-	   p="$$1"; f="$$2"; shift 2; \
-	   o="docker/override.d/$$p/docker-compose.override.yaml"; \
-	   if [ -f "$$f" ]; then \
-	      cmd="docker compose -p $$p --env-file make.d/.env -f $$f"; \
-	      [ -f "$$o" ] && cmd="$$cmd -f $$o"; \
-	      $$cmd up -d; \
-	   fi; \
-	done
+	@docker network inspect sandbox >/dev/null 2>&1 \
+		&& echo "network sandbox already exists" \
+		|| (docker network create sandbox >/dev/null && echo "network sandbox created")
+	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),up -d)
+	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),up -d)
+	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),up -d)
+	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),up -d)
+	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),up -d)
 
 .PHONY: docker-down
 docker-down:
-	@docker network rm sandbox 2>/dev/null || true
-	@set -- $(SERVICES); \
-	while [ $$# -gt 0 ]; do \
-	   p="$$1"; f="$$2"; shift 2; \
-	   if [ -f "$$f" ]; then \
-	      docker compose -p $$p --env-file make.d/.env -f $$f down; \
-	   fi; \
-	done
+	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),down)
+	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down)
+	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down)
+	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down)
+	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),down)
+	@docker network inspect sandbox >/dev/null 2>&1 \
+		&& (docker network rm sandbox >/dev/null && echo "network sandbox removed") \
+		|| echo "network sandbox not found"
 
 .PHONY: docker-clean
 docker-clean:

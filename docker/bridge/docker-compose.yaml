@@ -1,0 +1,23 @@
+services:
+  dify-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dify-bridge
+    ports:
+      - "8765:8765"
+    env_file:
+      - src/.env
+    restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+      - VOICEVOX_URL=http://voicevox:50021
+      - DIFY_BASE_URL=http://dify-api:5001/v1
+      # コンテナ起動時に env_file の内容が環境変数として設定される
+      #- DIFY_API_KEY=${DIFY_API_KEY}
+    networks:
+      - dify_bridge_default
+
+networks:
+  dify_bridge_default:
+    driver: bridge
