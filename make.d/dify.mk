@@ -8,8 +8,6 @@ SHELL := /bin/bash
 TASKS += \
 	dify-git-pull \
 	dify-git-dell \
-	dify-docker-up \
-	dify-docker-down \
 	dify-backup \
 	dify-backup-list \
 	dify-backup-clean \

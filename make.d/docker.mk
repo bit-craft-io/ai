@@ -24,9 +24,14 @@ COMMON_ENV       := make.d/.env
 define compose_action
 	@if [ -f "$(3)" ]; then \
 		cmd="docker compose -p $(1) --env-file $(COMMON_ENV)"; \
-		[ -f "$(2)/.env" ] && cmd="$$cmd --env-file $(2)/.env"; \
+		[ -f "$(2)/.env" ] && \
+			cmd="$$cmd --env-file $(2)/.env"; \
 		cmd="$$cmd -f $(3)"; \
-		[ -f "docker/override.d/$(1)/docker-compose.override.yaml" ] && cmd="$$cmd -f docker/override.d/$(1)/docker-compose.override.yaml"; \
+		[ -f "docker/override.d/$(1)/docker-compose.override.yaml" ] && \
+			cmd="$$cmd -f docker/override.d/$(1)/docker-compose.override.yaml"; \
+		[ "$(__DEV_CONTAINER)" = "true" ] && \
+			[ -f "docker/override.d/$(1)/docker-compose.dev.yaml" ] && \
+			cmd="$$cmd -f docker/override.d/$(1)/docker-compose.dev.yaml"; \
 		$$cmd $(4); \
 	fi
 endef
