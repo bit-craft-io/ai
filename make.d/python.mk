@@ -42,3 +42,6 @@ python-setup:
 	$(VENV_PIP) install setuptools
 	# Web API サーバー構築・起動用
 	$(VENV_PIP) install fastapi uvicorn
+	# JMESPath（JSONクエリライブラリ）のインストール
+	$(VENV_PIP) install jmespath
+

@@ -8,7 +8,9 @@ SHELL := /bin/bash
 TASKS += \
 	windows-setup \
 	mic-spk-enable \
-	mic-spk-disable
+	mic-spk-disable \
+	dify-cache-clear-dry \
+	dify-cache-clear
 # ========================================
 # command
 # ----------------------------------------
@@ -21,7 +23,7 @@ endif
 
 .PHONY: windows-setup
 windows-setup:
-	$(VENV_PYTHON) $(__TOOLS_ROOT)/windows/setup.py
+	$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/setup.py
 
 .PHONY: mic-spk-enable
 mic-spk-enable:
@@ -38,17 +40,40 @@ mic-spk-disable:
 # マイクの制御
 .PHONY: mic-on
 mic-on:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/windows/mic_on.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/mic_on.py
 
 .PHONY: mic-off
 mic-off:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/windows/mic_off.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/mic_off.py
 
 # スピーカーの制御
 .PHONY: spk-on
 spk-on:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/windows/spk_on.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/spk_on.py
 
 .PHONY: spk-off
 spk-off:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/windows/spk_off.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/spk_off.py
+
+.PHONY: dify-cache-clear-dry
+dify-cache-clear-dry:
+	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
+	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_DB_USER=$(__DIFY_DB_USER) \
+	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
+	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
+	bash $(__TOOLS_ROOT)/dify-cache-check.sh
+
+.PHONY: dify-cache-clear
+dify-cache-clear:
+	@read -p "This will permanently delete orphaned plugin cache files. Continue? [y/N]: " ans; \
+	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
+	   echo "Cancelled."; \
+	   exit 0; \
+	fi; \
+	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
+	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_DB_USER=$(__DIFY_DB_USER) \
+	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
+	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
+	bash $(__TOOLS_ROOT)/dify-cache-check.sh --apply
