@@ -29,7 +29,6 @@ dify-git-pull:
 		cp $(__DOCKER_ROOT_DIFY)/docker/.env.example $(__DOCKER_ROOT_DIFY)/docker/.env; \
 		echo "make .env from .env.example with custom project name"; \
 		echo "COMPOSE_PROJECT_NAME=dify" >> $(__DOCKER_ROOT_DIFY)/docker/.env; \
-#		echo "SECRET_KEY=$(__DIFY_SECRET_KEY)" >> $(__DOCKER_ROOT_DIFY)/docker/.env; \
 	else \
 		echo "exist dify make skip"; \
 	fi
