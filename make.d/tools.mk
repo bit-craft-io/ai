@@ -8,7 +8,9 @@ SHELL := /bin/bash
 TASKS += \
 	windows-setup \
 	mic-spk-enable \
-	mic-spk-disable
+	mic-spk-disable \
+	dify-cache-clear-dry \
+	dify-cache-clear
 # ========================================
 # command
 # ----------------------------------------
@@ -52,3 +54,26 @@ spk-on:
 .PHONY: spk-off
 spk-off:
 	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/spk_off.py
+
+.PHONY: dify-cache-clear-dry
+dify-cache-clear-dry:
+	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
+	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_DB_USER=$(__DIFY_DB_USER) \
+	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
+	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
+	bash $(__TOOLS_ROOT)/dify-cache-check.sh
+
+.PHONY: dify-cache-clear
+dify-cache-clear:
+	@read -p "This will permanently delete orphaned plugin cache files. Continue? [y/N]: " ans; \
+	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
+	   echo "Cancelled."; \
+	   exit 0; \
+	fi; \
+	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
+	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_DB_USER=$(__DIFY_DB_USER) \
+	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
+	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
+	bash $(__TOOLS_ROOT)/dify-cache-check.sh --apply
