@@ -124,6 +124,9 @@ class DifyWSServer:
                 )
 
                 if result:
+
+                    print(f"[DEBUG] status={result.get('data', {}).get('status')} error={result.get('data', {}).get('error')}")
+
                     self.conversations[session_id] = result.get("conversation_id", conversation_id)
                     message_text = _extract_message(result)
                     res_data = {

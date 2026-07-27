@@ -1,13 +1,13 @@
 services:
   dify-bridge:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: dify-bridge
     ports:
       - "8765:8765"
     env_file:
-      - src/.env
+      - ./backend/src/.env
     restart: always
     environment:
       - PYTHONUNBUFFERED=1

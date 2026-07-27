@@ -1,6 +1,7 @@
 # docker-compose.override.yaml
 services:
   voicevox:
+    container_name: voicevox
     networks:
       - voicevox_default
       - sandbox

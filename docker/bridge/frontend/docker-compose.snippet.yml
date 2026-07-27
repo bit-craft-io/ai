@@ -1,0 +1,15 @@
+# 既存 docker-compose.yml の services: 配下に追記する例
+# bridge サービス名は現行構成(dify-bridge)に合わせてある
+
+services:
+  dify-bridge-frontend:
+    build:
+      context: ./dify-bridge-frontend
+    container_name: dify-bridge-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - dify-bridge
+    # bridgeへは同一Dockerネットワーク内なら ws://dify-bridge:8765 でも到達可
+    # ただしReact側はブラウザ(ホストマシン)から直接ws接続するため
+    # 実際に使うURLはホスト公開ポート ws://localhost:8765 のまま
