@@ -23,7 +23,7 @@ endif
 
 .PHONY: windows-setup
 windows-setup:
-	$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/setup.py
+	$(VENV_PYTHON) $(__TOOLS_ROOT)/win-ops/setup.py
 
 .PHONY: mic-spk-enable
 mic-spk-enable:
@@ -40,20 +40,20 @@ mic-spk-disable:
 # マイクの制御
 .PHONY: mic-on
 mic-on:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/mic_on.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/win-ops/mic_on.py
 
 .PHONY: mic-off
 mic-off:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/mic_off.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/win-ops/mic_off.py
 
 # スピーカーの制御
 .PHONY: spk-on
 spk-on:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/spk_on.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/win-ops/spk_on.py
 
 .PHONY: spk-off
 spk-off:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/mic-ops/spk_off.py
+	@$(VENV_PYTHON) $(__TOOLS_ROOT)/win-ops/spk_off.py
 
 .PHONY: dify-cache-clear-dry
 dify-cache-clear-dry:
