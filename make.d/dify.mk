@@ -9,6 +9,7 @@ TASKS += \
 	dify-git-pull \
 	dify-git-dell \
 	dify-backup \
+	dify-backup-size \
 	dify-backup-list \
 	dify-backup-clean \
 	dify-restore
@@ -165,3 +166,9 @@ dify-backup-list:
 dify-backup-clean:
 	@ls -1dt $(HISTORY_ROOT)/*/ 2>/dev/null | tail -n +4 | xargs -r rm -rf
 	@echo "[OK] old history backups (kept latest 3) removed"
+
+.PHONY: dify-backup-size
+dify-backup-size:
+	@echo "--------------------------------------------------------------------------------"
+	du -ch --exclude='history' --exclude='latest' $(DIR)/*
+	@echo "--------------------------------------------------------------------------------"
