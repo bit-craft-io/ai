@@ -36,6 +36,20 @@ define compose_action
 	fi
 endef
 
+.PHONY: docker-rebuild
+docker-rebuild:
+	# select
+	#   .env: __DEV_CONTAINER=false
+	#   .env: __DEV_CONTAINER=true
+	# execute
+	#   make docker-rebuild SERVICE=bridge
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE parameter is required. (e.g. make docker-rebuild SERVICE=bridge)"; \
+		exit 1; \
+	fi
+	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
+	$(call compose_action,$(SERVICE),$(__DOCKER_ROOT_$(SERVICE_UPPER)),$($(SERVICE_UPPER)_COMPOSE),up -d --build)
+
 .PHONY: docker-up
 docker-up:
 	@docker network inspect sandbox >/dev/null 2>&1 \
