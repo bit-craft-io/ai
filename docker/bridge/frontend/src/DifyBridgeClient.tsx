@@ -357,6 +357,7 @@ function inputStyle(extra: React.CSSProperties = {}): React.CSSProperties {
     fontSize: 13,
     fontFamily: "inherit",
     outline: "none",
+    boxSizing: "border-box",
     ...extra,
   };
 }
