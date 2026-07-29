@@ -6,7 +6,7 @@ SHELL := /bin/bash
 # menu
 # ----------------------------------------
 TASKS += \
-	python-init \
+	python-install \
 	python-setup
 # ========================================
 # command
@@ -18,8 +18,8 @@ ifndef ROOT_MK_INCLUDED
     export VENV_PIP    := $(ROOT_DIR)/.venv/bin/pip
 endif
 
-.PHONY: python-init
-python-init:
+.PHONY: python-install
+python-install:
 	sudo apt update
 	sudo apt install -y python3 python3-pip python3-venv
 	sudo apt install -y portaudio19-dev libpulse0

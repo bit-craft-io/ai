@@ -7,12 +7,14 @@ SHELL := /bin/bash
 # ----------------------------------------
 TASKS += \
 	dify-git-pull \
-	dify-git-dell \
+	dify-git-destroy \
+	dify-cache-remove \
 	dify-backup \
 	dify-backup-size \
 	dify-backup-list \
-	dify-backup-clean \
+	dify-backup-prune \
 	dify-restore
+
 # ========================================
 # command
 # ----------------------------------------
@@ -35,8 +37,8 @@ dify-git-pull:
 		echo "exist dify make skip"; \
 	fi
 
-.PHONY: dify-git-dell
-dify-git-dell:
+.PHONY: dify-git-destroy
+dify-git-destroy:
 	@# ユーザーに実行確認を求める
 	@read -p "Are you sure you want to delete dify? [y/N]: " ans; \
 	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
@@ -162,8 +164,8 @@ dify-backup-list:
 	@ls -1 $(HISTORY_ROOT)/ 2>/dev/null || echo "no history backups"
 
 # 直近3個を残して削除（history配下のみ、backup/直下とlatestは維持）
-.PHONY: dify-backup-clean
-dify-backup-clean:
+.PHONY: dify-backup-prune
+dify-backup-prune:
 	@ls -1dt $(HISTORY_ROOT)/*/ 2>/dev/null | tail -n +4 | xargs -r rm -rf
 	@echo "[OK] old history backups (kept latest 3) removed"
 
@@ -171,4 +173,25 @@ dify-backup-clean:
 dify-backup-size:
 	@echo "--------------------------------------------------------------------------------"
 	du -ch --exclude='history' --exclude='latest' $(DIR)/*
+	@echo "--------------------------------------------------------------------------------"
+
+.PHONY: dify-cache-remove
+dify-cache-remove:
+	@echo "--------------------------------------------------------------------------------"
+	@echo "cache clear dry-run"
+	@echo "--------------------------------------------------------------------------------"
+	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
+	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_DB_USER=$(__DIFY_DB_USER) \
+	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
+	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
+	bash tools/dify-cache-check.sh
+	@read -p "This will permanently delete orphaned plugin cache files. Continue? [y/N]: " ans; \
+	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
+	   echo "Cancelled."; \
+	   exit 0; \
+	fi; \
+	bash tools/dify-cache-check.sh --apply
+	@echo "--------------------------------------------------------------------------------"
+	@echo -e "$(CLR_GREEN) [OK] Cache remove Successfully!$(CLR_RESET)"
 	@echo "--------------------------------------------------------------------------------"
