@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pm7Rr4ixdhOxEcHhckVvoBVvf7vy5gbIKWoxJsEDe6HhP1qEEdwZHVOLQQSpPRR
+\restrict 6nwAnexHX6FzoctuUnXIriHUYV6c7JoySpuZsPtsBhF6xMXOr6yW0NRavG4ERv0
 
 -- Dumped from database version 15.18
 -- Dumped by pg_dump version 15.18
@@ -754,5 +754,5 @@ CREATE INDEX idx_trigger_installations_tenant_id ON public.trigger_installations
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pm7Rr4ixdhOxEcHhckVvoBVvf7vy5gbIKWoxJsEDe6HhP1qEEdwZHVOLQQSpPRR
+\unrestrict 6nwAnexHX6FzoctuUnXIriHUYV6c7JoySpuZsPtsBhF6xMXOr6yW0NRavG4ERv0
 
