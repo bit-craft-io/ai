@@ -8,7 +8,7 @@ SHELL := /bin/bash
 TASKS += \
 	docker-up \
 	docker-down \
-	docker-clean
+	docker-purge
 # ========================================
 # command
 # ----------------------------------------
@@ -42,23 +42,9 @@ docker-rebuild:
 	#   .env: __DEV_CONTAINER=true
 	# execute
 	#   make docker-rebuild SERVICE=bridge
-	@if [ -z "$(SERVICE)" ]; then \
-		echo "Error: SERVICE parameter is required. (e.g. make docker-rebuild SERVICE=bridge)"; \
-		exit 1; \
-	fi
-	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
-	$(call compose_action,$(SERVICE),$(__DOCKER_ROOT_$(SERVICE_UPPER)),$($(SERVICE_UPPER)_COMPOSE),up -d --build)
-
-.PHONY: docker-rebuild
-docker-rebuild:
 	@docker network inspect sandbox >/dev/null 2>&1 \
 		&& echo "network sandbox already exists" \
 		|| (docker network create sandbox >/dev/null && echo "network sandbox created")
-	# select
-	#   .env: __DEV_CONTAINER=false
-	#   .env: __DEV_CONTAINER=true
-	# execute
-	#   make docker-rebuild SERVICE=bridge
 	@if [ -z "$(SERVICE)" ]; then \
 		echo "Error: SERVICE parameter is required. (e.g. make docker-rebuild SERVICE=bridge)"; \
 		exit 1; \
@@ -68,6 +54,11 @@ docker-rebuild:
 
 .PHONY: docker-restart
 docker-restart:
+	# select
+	#   .env: __DEV_CONTAINER=false
+	#   .env: __DEV_CONTAINER=true
+	# execute
+	#   make docker-restart SERVICE=bridge
 	@if [ -z "$(SERVICE)" ]; then \
 	   echo "Error: SERVICE parameter is required. (e.g. make docker-restart SERVICE=bridge)"; \
 	   exit 1; \
@@ -97,18 +88,18 @@ docker-down:
 		&& (docker network rm sandbox >/dev/null && echo "network sandbox removed") \
 		|| echo "network sandbox not found"
 
-.PHONY: docker-clean
-docker-clean:
+.PHONY: docker-purge
+docker-purge:
 	@read -p "docker compose down -v [y/N]: " ans; \
 	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
 	   echo "Cancelled."; \
 	   exit 0; \
-	fi; \
-	docker network rm sandbox 2>/dev/null || true; \
-	set -- $(SERVICES); \
-	while [ $$# -gt 0 ]; do \
-	   p="$$1"; f="$$2"; shift 2; \
-	   if [ -f "$$f" ]; then \
-	      docker compose -p $$p --env-file make.d/.env -f $$f down -v; \
-	   fi; \
-	done
+	fi;
+	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),down -v)
+	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down -v)
+	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down -v)
+	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down -v)
+	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),down -v)
+	@docker network inspect sandbox >/dev/null 2>&1 \
+		&& (docker network rm sandbox >/dev/null && echo "network sandbox removed") \
+		|| echo "network sandbox not found"
