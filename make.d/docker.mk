@@ -9,7 +9,6 @@ TASKS += \
 	docker-up \
 	docker-down \
 	docker-clean
-
 # ========================================
 # command
 # ----------------------------------------
@@ -49,6 +48,32 @@ docker-rebuild:
 	fi
 	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
 	$(call compose_action,$(SERVICE),$(__DOCKER_ROOT_$(SERVICE_UPPER)),$($(SERVICE_UPPER)_COMPOSE),up -d --build)
+
+.PHONY: docker-rebuild
+docker-rebuild:
+	@docker network inspect sandbox >/dev/null 2>&1 \
+		&& echo "network sandbox already exists" \
+		|| (docker network create sandbox >/dev/null && echo "network sandbox created")
+	# select
+	#   .env: __DEV_CONTAINER=false
+	#   .env: __DEV_CONTAINER=true
+	# execute
+	#   make docker-rebuild SERVICE=bridge
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Error: SERVICE parameter is required. (e.g. make docker-rebuild SERVICE=bridge)"; \
+		exit 1; \
+	fi
+	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
+	$(call compose_action,$(SERVICE),$(__DOCKER_ROOT_$(SERVICE_UPPER)),$($(SERVICE_UPPER)_COMPOSE),up -d --build --force-recreate)
+
+.PHONY: docker-restart
+docker-restart:
+	@if [ -z "$(SERVICE)" ]; then \
+	   echo "Error: SERVICE parameter is required. (e.g. make docker-restart SERVICE=bridge)"; \
+	   exit 1; \
+	fi
+	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
+	$(call compose_action,$(SERVICE),$(__DOCKER_ROOT_$(SERVICE_UPPER)),$($(SERVICE_UPPER)_COMPOSE),restart)
 
 .PHONY: docker-up
 docker-up:

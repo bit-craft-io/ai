@@ -2,36 +2,45 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 /**
  * Dify WebSocket Bridge Client
- * 対象サーバ: DifyWSServer (websockets, /workflows/run 中継)
+ * 対象サーバ: DifyWSServer (workflows/run応答 → 文分割 → VOICEVOX → WS送信)
  *
  * プロトコル(サーバ実装準拠):
  *   送信: 生テキスト(JSON化しない) — websocket.send(text)
- *   受信(応答):        { status: "success" | "error", response?: string, message?: string, elapsed_time?: number }
- *   受信(push, 5秒毎): { type: "periodic_update", message: unknown }
+ *
+ *   受信(テキストフレーム, JSON):
+ *     { type: "speech_text", text: string }                        文単位で逐次届く
+ *     { type: "speech_done", aborted?: boolean, reason?: string }  1リクエスト分の応答完了
+ *     { type: "periodic_update", message: unknown }                push(5秒毎)
+ *
+ *   受信(バイナリフレーム):
+ *     直前の speech_text に対応するWAV音声データ(ArrayBuffer)
+ *     ※ 全文が音声化されるとは限らない(VOICEVOX失敗時は音声フレーム無し)
  */
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
-interface AckResponse {
-  status?: "success" | "error";
-  response?: string;
-  message?: string;
-  elapsed_time?: number;
+interface SpeechTextMsg {
+  type: "speech_text";
+  text: string;
 }
-
-interface PushUpdate {
+interface SpeechDoneMsg {
+  type: "speech_done";
+  aborted?: boolean;
+  reason?: string;
+}
+interface PeriodicUpdateMsg {
   type: "periodic_update";
   message: unknown;
 }
-
-type InboundMessage = AckResponse | PushUpdate;
+type InboundText = SpeechTextMsg | SpeechDoneMsg | PeriodicUpdateMsg;
 
 interface LogEntry {
   id: string;
-  kind: "sent" | "recv_success" | "recv_error" | "push" | "system";
+  kind: "sent" | "speech" | "done" | "push" | "system" | "error";
   timestamp: string;
   text: string;
   meta?: string;
+  hasAudio?: boolean;
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10);
@@ -41,9 +50,12 @@ const nowLabel = () =>
   "." +
   String(new Date().getMilliseconds()).padStart(3, "0");
 
-function isPushUpdate(m: InboundMessage): m is PushUpdate {
-  return (m as PushUpdate).type === "periodic_update";
-}
+const ABORT_REASON_LABEL: Record<string, string> = {
+  idle_timeout: "チャンク受信タイムアウト",
+  max_chars: "文字数上限超過",
+  max_sentences: "文数上限超過",
+  duplicate: "同一文繰り返し検知",
+};
 
 export default function DifyBridgeClient() {
   const [url, setUrl] = useState("ws://localhost:8765");
@@ -51,13 +63,24 @@ export default function DifyBridgeClient() {
   const [message, setMessage] = useState("");
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [autoScroll, setAutoScroll] = useState(true);
-  const [pending, setPending] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [nowPlayingId, setNowPlayingId] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const logEndRef = useRef<HTMLDivElement | null>(null);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+
+  // 直近の speech_text ログID(次に届くバイナリと対応付ける用)
+  const pendingSpeechIdRef = useRef<string | null>(null);
+  // 再生待ちキュー: {id, url}
+  const audioQueueRef = useRef<{ id: string; url: string }[]>([]);
+  const playingRef = useRef(false);
 
   const pushLog = useCallback((entry: Omit<LogEntry, "id" | "timestamp">) => {
-    setLogs((prev) => [...prev, { ...entry, id: genId(), timestamp: nowLabel() }]);
+    const id = genId();
+    setLogs((prev) => [...prev, { ...entry, id, timestamp: nowLabel() }]);
+    return id;
   }, []);
 
   useEffect(() => {
@@ -69,6 +92,29 @@ export default function DifyBridgeClient() {
       wsRef.current?.close();
     };
   }, []);
+
+  const playNextInQueue = useCallback(() => {
+    if (playingRef.current) return;
+    const next = audioQueueRef.current.shift();
+    if (!next || !audioElRef.current) {
+      setNowPlayingId(null);
+      return;
+    }
+    playingRef.current = true;
+    setNowPlayingId(next.id);
+    audioElRef.current.src = next.url;
+    audioElRef.current.play().catch(() => {
+      playingRef.current = false;
+      URL.revokeObjectURL(next.url);
+      playNextInQueue();
+    });
+  }, []);
+
+  const handleAudioEnded = useCallback(() => {
+    playingRef.current = false;
+    setNowPlayingId(null);
+    playNextInQueue();
+  }, [playNextInQueue]);
 
   const connect = useCallback(() => {
     if (wsRef.current) wsRef.current.close();
@@ -83,6 +129,7 @@ export default function DifyBridgeClient() {
       pushLog({ kind: "system", text: `接続失敗: ${(e as Error).message}` });
       return;
     }
+    socket.binaryType = "arraybuffer";
 
     socket.onopen = () => {
       setState("connected");
@@ -90,40 +137,66 @@ export default function DifyBridgeClient() {
     };
 
     socket.onmessage = (event) => {
-      let parsed: InboundMessage | null = null;
+      // バイナリ(音声WAV) — 直前の speech_text と対応付け
+      if (event.data instanceof ArrayBuffer) {
+        const blob = new Blob([event.data], { type: "audio/wav" });
+        const objUrl = URL.createObjectURL(blob);
+        const targetId = pendingSpeechIdRef.current;
+
+        if (targetId) {
+          setLogs((prev) =>
+            prev.map((l) => (l.id === targetId ? { ...l, hasAudio: true } : l))
+          );
+        }
+
+        if (audioEnabled) {
+          audioQueueRef.current.push({ id: targetId ?? genId(), url: objUrl });
+          playNextInQueue();
+        } else {
+          URL.revokeObjectURL(objUrl);
+        }
+        return;
+      }
+
+      // テキストフレーム(JSON)
+      let parsed: InboundText | null = null;
       try {
-        parsed = JSON.parse(event.data);
+        parsed = JSON.parse(event.data as string);
       } catch {
-        pushLog({ kind: "recv_error", text: String(event.data), meta: "JSON解析失敗" });
+        pushLog({ kind: "error", text: String(event.data), meta: "JSON解析失敗" });
         return;
       }
 
-      if (parsed && isPushUpdate(parsed)) {
-        const body =
-          typeof parsed.message === "string"
-            ? parsed.message
-            : JSON.stringify(parsed.message, null, 2);
-        pushLog({ kind: "push", text: body, meta: "periodic_update" });
-        return;
-      }
-
-      const ack = parsed as AckResponse;
-      setPending(false);
-      if (ack.status === "success") {
-        pushLog({
-          kind: "recv_success",
-          text: ack.response ?? "(応答本文なし)",
-          meta:
-            ack.elapsed_time !== undefined
-              ? `elapsed: ${ack.elapsed_time.toFixed(2)}s`
-              : undefined,
-        });
-      } else {
-        pushLog({
-          kind: "recv_error",
-          text: ack.message ?? "(エラー詳細なし)",
-          meta: `status: ${ack.status ?? "unknown"}`,
-        });
+      switch (parsed?.type) {
+        case "speech_text": {
+          const id = pushLog({ kind: "speech", text: parsed.text });
+          pendingSpeechIdRef.current = id;
+          break;
+        }
+        case "speech_done": {
+          setStreaming(false);
+          pendingSpeechIdRef.current = null;
+          if (parsed.aborted) {
+            pushLog({
+              kind: "error",
+              text: `応答が中断されました`,
+              meta: ABORT_REASON_LABEL[parsed.reason ?? ""] ?? parsed.reason ?? "unknown",
+            });
+          } else {
+            pushLog({ kind: "done", text: "応答完了" });
+          }
+          break;
+        }
+        case "periodic_update": {
+          const body =
+            typeof parsed.message === "string"
+              ? parsed.message
+              : JSON.stringify(parsed.message, null, 2);
+          pushLog({ kind: "push", text: body, meta: "periodic_update" });
+          break;
+        }
+        default:
+          pushLog({ kind: "error", text: event.data as string, meta: "未知のtype" });
       }
     };
 
@@ -134,6 +207,7 @@ export default function DifyBridgeClient() {
 
     socket.onclose = (event) => {
       setState("disconnected");
+      setStreaming(false);
       pushLog({
         kind: "system",
         text: `切断 (code=${event.code}${event.reason ? `, reason=${event.reason}` : ""})`,
@@ -141,7 +215,7 @@ export default function DifyBridgeClient() {
     };
 
     wsRef.current = socket;
-  }, [url, pushLog]);
+  }, [url, pushLog, audioEnabled, playNextInQueue]);
 
   const disconnect = useCallback(() => {
     wsRef.current?.close(1000, "manual disconnect");
@@ -151,7 +225,7 @@ export default function DifyBridgeClient() {
     if (!wsRef.current || state !== "connected" || message.trim().length === 0) return;
     wsRef.current.send(message);
     pushLog({ kind: "sent", text: message });
-    setPending(true);
+    setStreaming(true);
     setMessage("");
   }, [state, message, pushLog]);
 
@@ -188,6 +262,8 @@ export default function DifyBridgeClient() {
         boxSizing: "border-box",
       }}
     >
+      <audio ref={audioElRef} onEnded={handleAudioEnded} style={{ display: "none" }} />
+
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <header
           style={{
@@ -251,9 +327,19 @@ export default function DifyBridgeClient() {
             style={{ ...inputStyle({ width: "100%" }), resize: "vertical", fontFamily: "inherit" }}
           />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-            <span style={{ fontSize: 12, color: pending ? "#d97706" : "#484f58" }}>
-              {pending ? "応答待ち…" : ""}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <label style={{ fontSize: 12, color: "#8b949e", display: "flex", alignItems: "center", gap: 4 }}>
+                <input
+                  type="checkbox"
+                  checked={audioEnabled}
+                  onChange={(e) => setAudioEnabled(e.target.checked)}
+                />
+                音声ON
+              </label>
+              <span style={{ fontSize: 12, color: streaming ? "#d97706" : "#484f58" }}>
+                {streaming ? "応答生成中…" : ""}
+              </span>
+            </div>
             <button
               onClick={sendMessage}
               disabled={state !== "connected" || message.trim().length === 0}
@@ -283,7 +369,7 @@ export default function DifyBridgeClient() {
               background: "#010409",
               border: "1px solid #30363d",
               borderRadius: 6,
-              height: 400,
+              height: 420,
               overflowY: "auto",
               padding: 12,
               fontSize: 12,
@@ -296,13 +382,19 @@ export default function DifyBridgeClient() {
                 <div style={{ color: "#484f58" }}>
                   [{log.timestamp}] <span style={{ color: kindColor(log.kind) }}>{kindLabel(log.kind)}</span>
                   {log.meta && <span style={{ color: "#6e7681" }}> ({log.meta})</span>}
+                  {log.hasAudio && (
+                    <span style={{ color: nowPlayingId === log.id ? "#3fb950" : "#6e7681" }}>
+                      {" "}
+                      {nowPlayingId === log.id ? "▶ 再生中" : "🔊"}
+                    </span>
+                  )}
                 </div>
                 <pre
                   style={{
                     margin: "2px 0 0 0",
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-all",
-                    color: log.kind === "recv_error" ? "#f85149" : "#c9d1d9",
+                    color: log.kind === "error" ? "#f85149" : "#c9d1d9",
                   }}
                 >
                   {log.text}
@@ -321,12 +413,14 @@ function kindLabel(k: LogEntry["kind"]) {
   switch (k) {
     case "sent":
       return "SENT";
-    case "recv_success":
-      return "RECV";
-    case "recv_error":
-      return "ERROR";
+    case "speech":
+      return "TEXT";
+    case "done":
+      return "DONE";
     case "push":
       return "PUSH";
+    case "error":
+      return "ERROR";
     default:
       return "SYS";
   }
@@ -336,12 +430,14 @@ function kindColor(k: LogEntry["kind"]) {
   switch (k) {
     case "sent":
       return "#58a6ff";
-    case "recv_success":
+    case "speech":
       return "#3fb950";
-    case "recv_error":
-      return "#f85149";
+    case "done":
+      return "#a5d6ff";
     case "push":
       return "#a371f7";
+    case "error":
+      return "#f85149";
     default:
       return "#8b949e";
   }

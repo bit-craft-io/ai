@@ -10,7 +10,8 @@ TASKS += \
 	mic-spk-enable \
 	mic-spk-disable \
 	dify-cache-clear-dry \
-	dify-cache-clear
+	dify-cache-clear \
+	nvidia-smi
 # ========================================
 # command
 # ----------------------------------------
@@ -23,7 +24,7 @@ endif
 
 .PHONY: windows-setup
 windows-setup:
-	$(VENV_PYTHON) $(__TOOLS_ROOT)/win-ops/setup.py
+	$(VENV_PYTHON) tools/win-ops/setup.py
 
 .PHONY: mic-spk-enable
 mic-spk-enable:
@@ -40,7 +41,7 @@ mic-spk-disable:
 # マイクの制御
 .PHONY: mic-on
 mic-on:
-	@$(VENV_PYTHON) $(__TOOLS_ROOT)/win-ops/mic_on.py
+	@$(VENV_PYTHON) tools/win-ops/mic_on.py
 
 .PHONY: mic-off
 mic-off:

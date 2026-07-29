@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     websocket_port: int = 8765
 
+    voicevox_speed_scale: float = 1.0
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

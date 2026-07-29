@@ -6,22 +6,22 @@ SHELL := /bin/bash
 # menu
 # ----------------------------------------
 TASKS += \
-	wsl-init \
-	wsl-setup \
-	wsl-info \
-	wsl-clean
+	wsl-ollama-install \
+	wsl-ollama-model-pull \
+	wsl-ollama-model-list \
+	wsl-ollama-model-clean
 # ========================================
 # command
 # ----------------------------------------
-.PHONY: wsl-init
-wsl-init:
+.PHONY: wsl-ollama-install
+wsl-ollama-install:
 	@echo "--- Install Ollama ---"
 	@which ollama > /dev/null 2>&1 || (sudo apt-get install -y zstd && curl -fsSL https://ollama.com/install.sh | sh)
 	sudo systemctl stop ollama 2>/dev/null || true
 	sudo systemctl disable ollama 2>/dev/null || true
 
-.PHONY: wsl-setup
-wsl-setup:
+.PHONY: wsl-ollama-model-pull
+wsl-ollama-model-pull:
 	@echo "--- Pull LLM models ---"
 	@pgrep ollama > /dev/null 2>&1 || (ollama serve &)
 	sleep 3
@@ -29,16 +29,16 @@ wsl-setup:
 	ollama list
 	@pgrep ollama > /dev/null 2>&1 && pkill ollama || true
 
-.PHONY: wsl-info
-wsl-info:
+.PHONY: wsl-ollama-model-list
+wsl-ollama-model-list:
 	@echo "--- LLM models ---"
 	@pgrep ollama > /dev/null 2>&1 || (ollama serve > /dev/null 2>&1 &)
 	@sleep 3
 	@ollama list
 	@pgrep ollama > /dev/null 2>&1 && pkill ollama > /dev/null 2>&1 || true
 
-.PHONY: wsl-clean
-wsl-clean:
+.PHONY: wsl-ollama-model-clean
+wsl-ollama-model-clean:
 	@echo "--- Cleaning up Ollama processes ---"
 	@pgrep ollama > /dev/null 2>&1 || (echo "Starting ollama for cleanup..."; ollama serve > /dev/null 2>&1 & sleep 2)
 
