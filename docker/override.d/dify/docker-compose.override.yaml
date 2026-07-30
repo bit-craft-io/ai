@@ -1,0 +1,13 @@
+# docker-compose.override.yaml
+services:
+  api:
+    container_name: dify-api
+    networks:
+      - default
+      - ssrf_proxy_network
+      - sandbox
+
+networks:
+  sandbox:
+    external: true
+    name: sandbox

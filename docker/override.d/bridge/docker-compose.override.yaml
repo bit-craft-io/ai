@@ -1,0 +1,11 @@
+# docker-compose.override.yaml
+services:
+  dify-bridge:
+    networks:
+      - dify_bridge_default
+      - sandbox
+
+networks:
+  sandbox:
+    external: true
+    name: sandbox
