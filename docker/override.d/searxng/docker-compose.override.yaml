@@ -1,15 +1,11 @@
 # docker-compose.override.yaml
 services:
-  api:
+  searxng:
     networks:
       - default
       - dify_default
-      - sandbox
 
 networks:
   dify_default:
     external: true
     name: dify_default
-  sandbox:
-    external: true
-    name: sandbox

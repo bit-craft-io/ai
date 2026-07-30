@@ -14,6 +14,7 @@ TASKS += \
 # ----------------------------------------
 DIFY_COMPOSE     := $(__DOCKER_ROOT_DIFY)/docker-compose.yaml
 CRAWL_COMPOSE    := $(__DOCKER_ROOT_CRAWL)/docker-compose.yaml
+SEARXNG_COMPOSE    := $(__DOCKER_ROOT_SEARXNG)/docker-compose.yaml
 OLLAMA_COMPOSE   := $(__DOCKER_ROOT_OLLAMA)/docker-compose.yaml
 VOICEVOX_COMPOSE := $(__DOCKER_ROOT_VOICEVOX)/docker-compose.yaml
 BRIDGE_COMPOSE   := $(__DOCKER_ROOT_BRIDGE)/docker-compose.yaml
@@ -73,17 +74,19 @@ docker-up:
 		|| (docker network create sandbox >/dev/null && echo "network sandbox created")
 	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),up -d)
 	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),up -d)
+	$(call compose_action,searxng,$(__DOCKER_ROOT_SEARXNG),$(SEARXNG_COMPOSE),up -d)
 	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),up -d)
 	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),up -d)
 	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),up -d)
 
 .PHONY: docker-down
 docker-down:
-	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),down)
-	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down)
-	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down)
-	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down)
 	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),down)
+	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down)
+	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down)
+	$(call compose_action,searxng,$(__DOCKER_ROOT_SEARXNG),$(SEARXNG_COMPOSE),down)
+	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down)
+	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),down)
 	@docker network inspect sandbox >/dev/null 2>&1 \
 		&& (docker network rm sandbox >/dev/null && echo "network sandbox removed") \
 		|| echo "network sandbox not found"
@@ -95,11 +98,12 @@ docker-purge:
 	   echo "Cancelled."; \
 	   exit 0; \
 	fi;
-	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),down -v)
-	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down -v)
-	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down -v)
-	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down -v)
 	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),down -v)
+	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down -v)
+	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down -v)
+	$(call compose_action,searxng,$(__DOCKER_ROOT_SEARXNG),$(SEARXNG_COMPOSE),down-v)
+	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down -v)
+	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY),$(DIFY_COMPOSE),down -v)
 	@docker network inspect sandbox >/dev/null 2>&1 \
 		&& (docker network rm sandbox >/dev/null && echo "network sandbox removed") \
 		|| echo "network sandbox not found"

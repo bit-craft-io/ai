@@ -10,7 +10,3 @@ services:
 networks:
   voicevox_default:
     driver: bridge
-
-volumes:
-  open-webui:
-  langflow-data:

@@ -11,6 +11,7 @@ services:
       - OLLAMA_FLASH_ATTENTION=1
       # entrypoint.sh に渡す
       - EP_OLLAMA_MODEL=${__OLLAMA_MODEL}
+      - EP_WARMUP_MODEL=${__WARMUP_MODEL}
     ports:
       - "11434:11434"
     volumes:
@@ -44,7 +45,3 @@ services:
 networks:
   ollama_default:
     driver: bridge
-
-volumes:
-  open-webui:
-  langflow-data:
