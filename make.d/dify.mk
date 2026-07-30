@@ -191,6 +191,11 @@ dify-cache-remove:
 	   echo "Cancelled."; \
 	   exit 0; \
 	fi; \
+	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
+	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_DB_USER=$(__DIFY_DB_USER) \
+	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
+	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
 	bash tools/dify-cache-check.sh --apply
 	@echo "--------------------------------------------------------------------------------"
 	@echo -e "$(CLR_GREEN) [OK] Cache remove Successfully!$(CLR_RESET)"
