@@ -8,4 +8,3 @@ services:
 networks:
   sandbox:
     external: true
-    name: sandbox
