@@ -1,24 +1,37 @@
 services:
   api:
     container_name: dify-api
+#    environment:
+#      SSRF_PROXY_ALLOW_PRIVATE_IPS: "0.0.0.0/0"
     networks:
       - default
       - ssrf_proxy_network
       - sandbox
 
   worker:
+    container_name: dify-worker
+#    environment:
+#      SSRF_PROXY_ALLOW_PRIVATE_IPS: "0.0.0.0/0"
     networks:
       - default
       - ssrf_proxy_network
       - sandbox
 
   plugin_daemon:
+    container_name: dify-plugin_daemon
     networks:
       - default
       - ssrf_proxy_network
       - sandbox
 
+  ssrf_proxy:
+    container_name: dify-ssrf_proxy
+    environment:
+      HTTP_PORT: ${SSRF_HTTP_PORT:-3128}
+      COREDUMP_DIR: ${SSRF_COREDUMP_DIR:-/var/spool/squid}
+      # プライベートIPにHTTPアクセスを許可
+      SSRF_PROXY_ALLOW_PRIVATE_IPS: "0.0.0.0/0"
+
 networks:
   sandbox:
     external: true
-    name: sandbox
