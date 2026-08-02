@@ -163,7 +163,9 @@ class DifyWSServer:
 
         try:
             async for message in websocket:
-                session_id = str(uuid.uuid4())
+                # 一定時間は、前回の質問の内容を踏まえて回答
+                #session_id = str(uuid.uuid4())
+                session_id = self.session_mgr.get_id()
                 print(f"[Client -> WS]: {message} (session: {session_id})")
 
                 loop = asyncio.get_running_loop()

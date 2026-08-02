@@ -1,6 +1,7 @@
 # docker-compose.override.yaml
 services:
   api:
+    container_name: crawl-api
     networks:
       - default
       - dify_default
@@ -9,7 +10,5 @@ services:
 networks:
   dify_default:
     external: true
-    name: dify_default
   sandbox:
     external: true
-    name: sandbox
