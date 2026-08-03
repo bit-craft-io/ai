@@ -1,0 +1,3 @@
+FROM langgenius/dify-sandbox:0.2.15
+COPY ./docker/override.d/dify/src/python /dependencies/dify-workflow-helpers
+RUN pip install -e /dependencies/dify-workflow-helpers

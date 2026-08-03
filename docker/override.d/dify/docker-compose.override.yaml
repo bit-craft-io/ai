@@ -1,8 +1,20 @@
 services:
+#  sandbox-setup:
+#    image: python:3.10-slim
+#    volumes:
+#      - ./docker/override.d/dify/src/python:/src_mount:ro
+#      - ./volumes/sandbox/dependencies:/dependencies
+#    command: >
+#      sh -c "mkdir -p /dependencies/dify-workflow-helpers &&
+#             cp -rf /src_mount/. /dependencies/dify-workflow-helpers/"
+#
+#  sandbox:
+#    depends_on:
+#      sandbox-setup:
+#        condition: service_completed_successfully
+
   api:
     container_name: dify-api
-#    environment:
-#      SSRF_PROXY_ALLOW_PRIVATE_IPS: "0.0.0.0/0"
     networks:
       - default
       - ssrf_proxy_network
@@ -10,8 +22,6 @@ services:
 
   worker:
     container_name: dify-worker
-#    environment:
-#      SSRF_PROXY_ALLOW_PRIVATE_IPS: "0.0.0.0/0"
     networks:
       - default
       - ssrf_proxy_network
