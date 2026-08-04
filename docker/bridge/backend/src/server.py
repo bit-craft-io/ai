@@ -49,7 +49,7 @@ CHUNK_IDLE_TIMEOUT = 15.0
 # ─────────────────────────────────────────
 # VOICEVOX
 # ─────────────────────────────────────────
-def text_to_voicevox_wav(text: str, speaker_id: int = 1, speed_scale: float = 1.0) -> bytes | None:
+def _text_to_voicevox_wav(text: str, speaker_id: int = 1, speed_scale: float = 1.0) -> bytes | None:
     try:
         print(f"[VOICEVOX] 音声生成開始: {text}")
         query_res = requests.post(
@@ -73,7 +73,7 @@ def text_to_voicevox_wav(text: str, speaker_id: int = 1, speed_scale: float = 1.
 # Dify呼び出し
 # ─────────────────────────────────────────
 def _build_payload(user_text: str, conversation_id: str = "") -> dict:
-    payload = {"inputs": {"message": user_text}, "response_mode": "blocking", "user": DIFY_USER_ID}
+    payload = {"inputs": {"query": user_text}, "response_mode": "blocking", "user": DIFY_USER_ID}
     if conversation_id:
         payload["conversation_id"] = conversation_id
     return payload
@@ -106,7 +106,7 @@ def _extract_message(result: dict) -> str | None:
         return None
     outputs = result.get("data", {}).get("outputs")
     if isinstance(outputs, dict):
-        return outputs.get("message") or outputs.get("text")
+        return outputs.get("answer") or outputs.get("text")
     if isinstance(outputs, str):
         return outputs
     return None
@@ -163,7 +163,9 @@ class DifyWSServer:
 
         try:
             async for message in websocket:
-                session_id = str(uuid.uuid4())
+                # 一定時間は、前回の質問の内容を踏まえて回答
+                #session_id = str(uuid.uuid4())
+                session_id = self.session_mgr.get_id()
                 print(f"[Client -> WS]: {message} (session: {session_id})")
 
                 loop = asyncio.get_running_loop()
@@ -259,7 +261,7 @@ class DifyWSServer:
         print(f"[Send Sentence]: {sentence}")
         await websocket.send(json.dumps({"type": "speech_text", "text": sentence}, ensure_ascii=False))
         wav_bytes = await loop.run_in_executor(
-            None, partial(text_to_voicevox_wav, sentence, speaker_id=1, speed_scale=VOICEVOX_SPEED_SCALE)
+            None, partial(_text_to_voicevox_wav, sentence, speaker_id=1, speed_scale=VOICEVOX_SPEED_SCALE)
         )
         if wav_bytes:
             await websocket.send(wav_bytes)

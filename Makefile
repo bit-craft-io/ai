@@ -4,6 +4,7 @@ SHELL := /bin/bash
 # ========================================
 # include
 # ----------------------------------------
+include make.d/_common.mk
 include make.d/wsl.mk
 include make.d/docker.mk
 include make.d/dify.mk

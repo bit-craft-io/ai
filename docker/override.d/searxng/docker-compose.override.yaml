@@ -1,8 +1,8 @@
 # docker-compose.override.yaml
 services:
-  ollama-proxy:
+  searxng:
+    container_name: searxng
     networks:
-      - ollama_default
       - sandbox
 
 networks:

@@ -45,3 +45,8 @@ python-setup:
 	# JMESPath（JSONクエリライブラリ）のインストール
 	$(VENV_PIP) install jmespath
 
+	# source .venv/bin/activate を自動化
+	echo "# add $(date +'%Y.%m.%d') direnv" >> .envrc
+	echo 'source .venv/bin/activate' >> .envrc
+	direnv allow
+
