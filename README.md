@@ -1,63 +1,89 @@
 ## 概要
 - AIエージェント開発・検証のための学習用リポジトリ
-### 準備
-- direnv（ディレクトリ毎に環境変数を自動設定）
+### Make内容の説明
 ```
-sudo apt update
-sudo apt install direnv
+make
 ```
 ```
-echo "# add \$(date +'%Y.%m.%d') direnv" >> ~/.bashrc
-echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
-echo 'export DIRENV_LOG_FORMAT=""' >> ~/.bashrc
+/
+├── _common                               # 共通コマンド
+│   └── _setup_all                        # 必要な環境構築処理を順番に実行
+├── wsl                                   # WSL・Ollama環境の管理
+│   ├── wsl-tool-install                  # 開発環境ツールのインストール
+│   ├── wsl-git_lfs-setup                 # Git LFSの設定
+│   ├── wsl-ollama-install                # Ollamaをインストール
+│   ├── wsl-ollama-model-pull             # モデルをダウンロード
+│   ├── wsl-ollama-model-list             # モデル一覧を表示
+│   └── wsl-ollama-model-clean            # 未使用モデルを削除
+│
+├── docker                                # Docker環境の管理
+│   ├── docker-up                         # コンテナを起動
+│   ├── docker-down                       # コンテナを停止
+│   └── docker-purge                      # コンテナ・イメージ等を削除
+│
+├── dify                                  # Dify環境の管理
+│   ├── dify-git-pull                     # 最新ソースを取得
+│   ├── dify-git-destroy                  # Git管理を初期化
+│   ├── dify-cache-remove                 # キャッシュを削除
+│   ├── dify-backup                       # バックアップを作成
+│   ├── dify-backup-size                  # バックアップ容量を表示
+│   ├── dify-backup-list                  # バックアップ一覧を表示
+│   ├── dify-backup-prune                 # 古いバックアップを削除
+│   └── dify-restore                      # バックアップを復元
+│
+├── crawl                                 # クローラー環境の管理
+│   ├── crawl-git-pull                    # 最新ソースを取得
+│   ├── crawl-git-del                     # Git管理を削除
+│   ├── crawl-docker-up                   # クローラーを起動
+│   └── crawl-docker-down                 # クローラーを停止
+│
+├── python                                # Python環境の構築
+│   ├── python-install                    # Pythonをインストール
+│   └── python-setup                      # Python環境を設定
+│
+└── tools                                 # 補助ツール
+    ├── windows-setup                     # Windows初期設定
+    ├── mic-spk-enable                    # マイク・スピーカーを有効化
+    ├── mic-spk-disable                   # マイク・スピーカーを無効化
+    └── nvidia-smi                        # GPU情報を表示
+```
+### コンテナを起動の準備
+```
+make
 ```
 ```
-source ~/.bashrc
-direnv version
-```
-```
-# .envrc のあるディレクトリでコマンドを実行
-direnv allow
-```
-- python3 をインストール
-```
-sudo apt update
-sudo apt install python3 python3-pip python3-venv
-dpkg -l | grep python3-venv
-```
-```
-cd /var/www/bc.ai
-python3 -m venv .venv
-source .venv/bin/activate
-```
-- source .venv/bin/activate を自動化
-```
-cd /var/www/bc.ai
-echo "# add \$(date +'%Y.%m.%d') direnv" >> .envrc
-echo 'source .venv/bin/activate' >> ~/.envrc
+--- Select Group ---
+> _common
+--- Select Task [_common] ---
+> _setup_all
 
-direnv allow
+実行内容:
+- WSL環境構築
+- Git LFS設定
+- Ollamaモデル取得
+- Python環境構築
+- Dify取得
+- Crawl取得
 ```
-- Git LFS 導入
+### コンテナを起動
 ```
-cd /var/www/bc.ai
-sudo apt update
-sudo apt install git-lfs
-
-git lfs install
-git lfs version
-
-git lfs track "backup/*.tar.gz"
-git add .gitattributes
+make
 ```
-### 各種コマンド
-- コンテナ作成
 ```
-make menu
-make dify-pull
-make dify-up
+--- Select Group ---
+> docker
+--- Select Task [_common] ---
+> docker-up
 ```
-- コンテナ削除
+### デモデータをリストア
 ```
-make dify-clean
+--- Select Group ---
+> dify
+--- Select Task [_common] ---
+> dify-restore
 ```
+### コンテナにアクセス
+- [Dify コンテナ](http://localhost)<br />
+u: admin@localhost.com<br />
+p: admin1234
+- [WebSocket 通信確認](http://localhost:5173)<br />

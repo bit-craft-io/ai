@@ -6,22 +6,40 @@ SHELL := /bin/bash
 # menu
 # ----------------------------------------
 TASKS += \
-	wsl-ollama-install \
+	wsl-tool-install \
+	wsl-git_lfs-setup \
 	wsl-ollama-model-pull \
 	wsl-ollama-model-list \
 	wsl-ollama-model-clean
 # ========================================
 # command
 # ----------------------------------------
-.PHONY: wsl-ollama-install
-wsl-ollama-install:
+.PHONY: wsl-tool-install
+wsl-tool-install:
+	sudo apt -y update
+
+	@echo "--- Install direnv ---"
+	sudo apt -y install direnv
+	echo "# add $(date +'%Y.%m.%d') direnv" >> ~/.bashrc
+	source ~/.bashrc
+	direnv version
+
+	@echo "--- Install Git LFS ---"
+	sudo apt -y install git-lfs
+
 	@echo "--- Install Ollama ---"
 	@which ollama > /dev/null 2>&1 || (sudo apt-get install -y zstd && curl -fsSL https://ollama.com/install.sh | sh)
 	sudo systemctl stop ollama 2>/dev/null || true
 	sudo systemctl disable ollama 2>/dev/null || true
 
-__MODELS := $(__OLLAMA_MODEL) $(__WARMUP_MODEL)
+.PHONY: wsl-git_lfs-setup
+wsl-git_lfs-setup:
+	git lfs install
+	git lfs version
+	git lfs track "backup/*.tar.gz"
+	git add .gitattributes
 
+__MODELS := $(__OLLAMA_MODEL) $(__WARMUP_MODEL)
 .PHONY: wsl-ollama-model-pull
 wsl-ollama-model-pull:
 	@echo "--- Pull LLM models ---"

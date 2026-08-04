@@ -8,7 +8,7 @@ SHELL := /bin/bash
 TASKS += \
 	dify-git-pull \
 	dify-git-destroy \
-	dify-cache-remove \
+	dify-cleanup-all \
 	dify-backup \
 	dify-backup-size \
 	dify-backup-list \
@@ -175,28 +175,65 @@ dify-backup-size:
 	du -ch --exclude='history' --exclude='latest' $(DIR)/*
 	@echo "--------------------------------------------------------------------------------"
 
+__DIFY_ENV = DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
+	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_DB_USER=$(__DIFY_DB_USER) \
+	DIFY_DB_NAME=$(__DIFY_DB_NAME) \
+	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
+	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR)
 .PHONY: dify-cache-remove
 dify-cache-remove:
 	@echo "--------------------------------------------------------------------------------"
 	@echo "cache clear dry-run"
 	@echo "--------------------------------------------------------------------------------"
-	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
-	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
-	DIFY_DB_USER=$(__DIFY_DB_USER) \
-	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
-	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
-	bash tools/dify-cache-check.sh
+	$(__DIFY_ENV) bash tools/dify-cache-check.sh
 	@read -p "This will permanently delete orphaned plugin cache files. Continue? [y/N]: " ans; \
 	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
 	   echo "Cancelled."; \
 	   exit 0; \
 	fi; \
-	DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
-	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
-	DIFY_DB_USER=$(__DIFY_DB_USER) \
-	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
-	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR) \
-	bash tools/dify-cache-check.sh --apply
+	$(__DIFY_ENV) bash tools/dify-cache-check.sh --apply
 	@echo "--------------------------------------------------------------------------------"
 	@echo -e "$(CLR_GREEN) [OK] Cache remove Successfully!$(CLR_RESET)"
 	@echo "--------------------------------------------------------------------------------"
+
+.PHONY: dify-files-remove-orphan
+dify-files-remove-orphan:
+	@API_CONTAINER=$$(docker compose -f $(__DIFY_COMPOSE_FILE) ps -q api); \
+	echo "--------------------------------------------------------------------------------"; \
+	echo "orphaned file cleanup (DB + storage): dry-run"; \
+	echo "--------------------------------------------------------------------------------"; \
+	echo "API container: $$API_CONTAINER"; \
+	docker exec -i "$$API_CONTAINER" sh -c "echo n | flask clear-orphaned-file-records"; \
+	docker exec -i "$$API_CONTAINER" sh -c "echo n | flask remove-orphaned-files-on-storage"; \
+	echo "--------------------------------------------------------------------------------"; \
+	read -p "This will permanently delete orphaned file records/files. Continue? [y/N]: " ans; \
+	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
+	   echo "Cancelled."; \
+	   exit 0; \
+	fi; \
+	docker exec -it "$$API_CONTAINER" flask clear-orphaned-file-records -f; \
+	docker exec -it "$$API_CONTAINER" flask remove-orphaned-files-on-storage -f; \
+	echo "--------------------------------------------------------------------------------"; \
+	echo -e "$(CLR_GREEN) [OK] Orphaned file cleanup Successfully!$(CLR_RESET)"; \
+	echo "--------------------------------------------------------------------------------"
+
+.PHONY: dify-files-remove-website
+dify-files-remove-website:
+	@echo "--------------------------------------------------------------------------------"
+	@echo "website_files cleanup: dry-run (with documents-count safety check)"
+	@echo "--------------------------------------------------------------------------------"
+	$(__DIFY_ENV) bash tools/dify-files-check-website.sh
+	@read -p "This will permanently delete website_files. Continue? [y/N]: " ans; \
+	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
+	   echo "Cancelled."; \
+	   exit 0; \
+	fi; \
+	$(__DIFY_ENV) bash tools/dify-files-check-website.sh --apply
+	@echo "--------------------------------------------------------------------------------"
+	@echo -e "$(CLR_GREEN) [OK] website_files remove Successfully!$(CLR_RESET)"
+	@echo "--------------------------------------------------------------------------------"
+
+.PHONY: dify-cleanup-all
+dify-cleanup-all: dify-files-remove-orphan dify-files-remove-website dify-cache-remove
+	@echo -e "$(CLR_GREEN) [OK] All Dify cleanup tasks completed!$(CLR_RESET)"

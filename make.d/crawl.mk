@@ -20,7 +20,7 @@ crawl-git-pull:
 		git clone --branch v2.11.0 --depth 1 https://github.com/firecrawl/firecrawl $(__DOCKER_ROOT_CRAWL); \
 		yes | rm -r $(__DOCKER_ROOT_CRAWL)/.github; \
 		echo "make .env from .env.example"; \
-		cp $(__DOCKER_ROOT_CRAWL)/docker/.env.example $(__DOCKER_ROOT_CRAWL)/docker/.env; \
+		cp docker/override.d/crawl/.env.example $(__DOCKER_ROOT_CRAWL)/.env; \
 	else \
 		echo "exist crawl make skip"; \
 	fi

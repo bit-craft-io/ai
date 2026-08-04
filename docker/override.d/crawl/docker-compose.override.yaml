@@ -3,12 +3,16 @@ services:
   api:
     container_name: crawl-api
     networks:
-      - default
-      - dify_default
       - sandbox
+  rabbitmq:
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      # 5s では起動できない場合があるため延ばす
+      start_period: 30s
 
 networks:
-  dify_default:
-    external: true
   sandbox:
     external: true
