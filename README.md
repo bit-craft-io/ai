@@ -72,14 +72,14 @@ make
 ```
 --- Select Group ---
 > docker
---- Select Task [_common] ---
+--- Select Task [docker] ---
 > docker-up
 ```
 ### デモデータをリストア
 ```
 --- Select Group ---
 > dify
---- Select Task [_common] ---
+--- Select Task [dify] ---
 > dify-restore
 ```
 ### コンテナにアクセス
