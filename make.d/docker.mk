@@ -1,6 +1,7 @@
 -include make.d/.env
 export
 SHELL := /bin/bash
+SERVICES := dify crawl searxng ollama voicevox bridge
 
 # ========================================
 # menu
@@ -8,88 +9,112 @@ SHELL := /bin/bash
 TASKS += \
 	docker-up \
 	docker-down \
-	docker-purge
+	docker-purge \
+	docker-build \
+	docker-one-build \
+	docker-one-restart
 # ========================================
 # command
 # ----------------------------------------
-DIFY_COMPOSE     := $(__DOCKER_ROOT_DIFY)/docker/docker-compose.yaml
-CRAWL_COMPOSE    := $(__DOCKER_ROOT_CRAWL)/docker-compose.yaml
-SEARXNG_COMPOSE    := $(__DOCKER_ROOT_SEARXNG)/docker-compose.yaml
-OLLAMA_COMPOSE   := $(__DOCKER_ROOT_OLLAMA)/docker-compose.yaml
-VOICEVOX_COMPOSE := $(__DOCKER_ROOT_VOICEVOX)/docker-compose.yaml
-BRIDGE_COMPOSE   := $(__DOCKER_ROOT_BRIDGE)/docker-compose.yaml
+DIFY_COMPOSE     := $(__DOCKER_ROOT_DIFY)/docker
+CRAWL_COMPOSE    := $(__DOCKER_ROOT_CRAWL)
+SEARXNG_COMPOSE  := $(__DOCKER_ROOT_SEARXNG)
+OLLAMA_COMPOSE   := $(__DOCKER_ROOT_OLLAMA)
+VOICEVOX_COMPOSE := $(__DOCKER_ROOT_VOICEVOX)
+BRIDGE_COMPOSE   := $(__DOCKER_ROOT_BRIDGE)
 COMMON_ENV       := make.d/.env
 
-# $(1)=project name $(2)=root dir $(3)=compose file $(4)=action(up -d / down)
+# $(1)=project name $(2)=compose dir $(3)=action(up -d / down)
 define compose_action
-	@if [ -f "$(3)" ]; then \
-		cmd="docker compose -p $(1) --env-file $(COMMON_ENV)"; \
-		[ -f "$(2)/.env" ] && \
-			cmd="$$cmd --env-file $(2)/.env"; \
-		cmd="$$cmd --file $(3)"; \
-		[ -f "docker/override.d/$(1)/docker-compose.override.yaml" ] && \
-			cmd="$$cmd --file docker/override.d/$(1)/docker-compose.override.yaml"; \
-		[ "$(__DEV_CONTAINER)" = "true" ] && \
-			[ -f "docker/override.d/$(1)/docker-compose.dev.yaml" ] && \
-			cmd="$$cmd --file docker/override.d/$(1)/docker-compose.dev.yaml"; \
-		$$cmd $(4); \
+	@service=$(1); \
+	root=$(2); \
+	action="$(3)"; \
+	base="$$root/docker-compose.yaml"; \
+	if [ -f "$$base" ]; then \
+		cmd="docker compose -p $$service --env-file $(COMMON_ENV)"; \
+		[ -f "$$root/.env" ] && cmd="$$cmd --env-file $$root/.env"; \
+		cmd="$$cmd --file $$base"; \
+		ovr="docker/override.d/$$service/docker-compose.override.yaml"; \
+		dev="docker/override.d/$$service/docker-compose.dev.yaml"; \
+		[ -f "$$ovr" ] && cmd="$$cmd --file $$ovr"; \
+		[ "$(__DEV_CONTAINER)" = "true" ] && [ -f "$$dev" ] && cmd="$$cmd --file $$dev"; \
+		$$cmd $$action; \
 	fi
 endef
 
-.PHONY: docker-rebuild
-docker-rebuild:
-	# select
-	#   .env: __DEV_CONTAINER=false
-	#   .env: __DEV_CONTAINER=true
-	# execute
-	#   make docker-rebuild SERVICE=bridge
+define select_service
+	if [ -z "$(SERVICE)" ]; then \
+		echo "----------------------------------------" >&2; \
+		echo "> rebuild a service:" >&2; \
+		echo "----------------------------------------" >&2; \
+		echo "$(SERVICES)" | tr ' ' '\n' | nl -w2 -s') ' | sed 's/^/  /' >&2; \
+		trap 'echo cancelled >&2; exit 0' INT; \
+		read -p "> number: " num < /dev/tty; \
+		echo $(SERVICES) | cut -d' ' -f"$$num"; \
+	else \
+		echo "$(SERVICE)"; \
+	fi
+endef
+
+.PHONY: docker-one-build
+docker-one-build:
 	@docker network inspect sandbox >/dev/null 2>&1 \
 		&& echo "network sandbox already exists" \
 		|| (docker network create sandbox >/dev/null && echo "network sandbox created")
-	@if [ -z "$(SERVICE)" ]; then \
+	@service=$$($(call select_service)); \
+	if [ -z "$$service" ]; then \
 		echo "Error: SERVICE parameter is required. (e.g. make docker-rebuild SERVICE=bridge)"; \
-		exit 1; \
-	fi
-	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
-	$(call compose_action,$(SERVICE),$(__DOCKER_ROOT_$(SERVICE_UPPER)),$($(SERVICE_UPPER)_COMPOSE),up -d --build --force-recreate)
+		exit 0; \
+	fi; \
+	$(MAKE) --no-print-directory _docker-one-build SERVICE="$$service"
 
-.PHONY: docker-restart
-docker-restart:
-	# select
-	#   .env: __DEV_CONTAINER=false
-	#   .env: __DEV_CONTAINER=true
-	# execute
-	#   make docker-restart SERVICE=bridge
-	@if [ -z "$(SERVICE)" ]; then \
-	   echo "Error: SERVICE parameter is required. (e.g. make docker-restart SERVICE=bridge)"; \
-	   exit 1; \
-	fi
+.PHONY: _docker-one-build
+_docker-one-build:
 	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
-	$(call compose_action,$(SERVICE),$(__DOCKER_ROOT_$(SERVICE_UPPER)),$($(SERVICE_UPPER)_COMPOSE),restart)
+	$(call compose_action,$(SERVICE),$($(SERVICE_UPPER)_COMPOSE),up -d --build --force-recreate)
+
+.PHONY: docker-one-restart
+docker-one-restart:
+	@service=$$($(call select_service)); \
+	if [ -z "$$service" ]; then \
+		echo "Error: SERVICE parameter is restart. (e.g. make docker-rebuild SERVICE=bridge)"; \
+		exit 0; \
+	fi; \
+	$(MAKE) --no-print-directory _docker-one-restart SERVICE="$$service"
+
+.PHONY: _docker-one-restart
+_docker-one-restart:
+	$(eval SERVICE_UPPER := $(shell echo $(SERVICE) | tr 'a-z' 'A-Z'))
+	$(call compose_action,$(SERVICE),$($(SERVICE_UPPER)_COMPOSE),restart)
 
 .PHONY: docker-up
 docker-up:
 	@docker network inspect sandbox >/dev/null 2>&1 \
 		&& echo "network sandbox already exists" \
 		|| (docker network create sandbox >/dev/null && echo "network sandbox created")
-	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY)/docker,$(DIFY_COMPOSE),up -d)
-	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),up -d)
-	$(call compose_action,searxng,$(__DOCKER_ROOT_SEARXNG),$(SEARXNG_COMPOSE),up -d)
-	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),up -d)
-	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),up -d)
-	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),up -d)
+	$(call compose_action,dify,$(DIFY_COMPOSE),up -d)
+	$(call compose_action,crawl,$(CRAWL_COMPOSE),up -d)
+	$(call compose_action,searxng,$(SEARXNG_COMPOSE),up -d)
+	$(call compose_action,ollama,$(OLLAMA_COMPOSE),up -d)
+	$(call compose_action,voicevox,$(VOICEVOX_COMPOSE),up -d)
+	$(call compose_action,bridge,$(BRIDGE_COMPOSE),up -d)
 
 .PHONY: docker-down
 docker-down:
-	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),down)
-	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down)
-	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down)
-	$(call compose_action,searxng,$(__DOCKER_ROOT_SEARXNG),$(SEARXNG_COMPOSE),down)
-	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down)
-	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY)/docker,$(DIFY_COMPOSE),down)
+	$(call compose_action,bridge,$(BRIDGE_COMPOSE),down)
+	$(call compose_action,voicevox,$(VOICEVOX_COMPOSE),down)
+	$(call compose_action,ollama,$(OLLAMA_COMPOSE),down)
+	$(call compose_action,searxng,$(SEARXNG_COMPOSE),down)
+	$(call compose_action,crawl,$(CRAWL_COMPOSE),down)
+	$(call compose_action,dify,$(DIFY_COMPOSE),down)
 	@docker network inspect sandbox >/dev/null 2>&1 \
 		&& (docker network rm sandbox >/dev/null && echo "network sandbox removed") \
 		|| echo "network sandbox not found"
+
+.PHONY: docker-build
+docker-build:
+	# Dockerfile
+	$(call compose_action,bridge,$(BRIDGE_COMPOSE),build --no-cache)
 
 .PHONY: docker-purge
 docker-purge:
@@ -98,12 +123,12 @@ docker-purge:
 	   echo "Cancelled."; \
 	   exit 0; \
 	fi;
-	$(call compose_action,bridge,$(__DOCKER_ROOT_BRIDGE),$(BRIDGE_COMPOSE),down -v)
-	$(call compose_action,voicevox,$(__DOCKER_ROOT_VOICEVOX),$(VOICEVOX_COMPOSE),down -v)
-	$(call compose_action,ollama,$(__DOCKER_ROOT_OLLAMA),$(OLLAMA_COMPOSE),down -v)
-	$(call compose_action,searxng,$(__DOCKER_ROOT_SEARXNG),$(SEARXNG_COMPOSE),down -v)
-	$(call compose_action,crawl,$(__DOCKER_ROOT_CRAWL),$(CRAWL_COMPOSE),down -v)
-	$(call compose_action,dify,$(__DOCKER_ROOT_DIFY)/docker,$(DIFY_COMPOSE),down -v)
+	$(call compose_action,bridge,$(BRIDGE_COMPOSE),down -v)
+	$(call compose_action,voicevox,$(VOICEVOX_COMPOSE),down -v)
+	$(call compose_action,ollama,$(OLLAMA_COMPOSE),down -v)
+	$(call compose_action,searxng,$(SEARXNG_COMPOSE),down -v)
+	$(call compose_action,crawl,$(CRAWL_COMPOSE),down -v)
+	$(call compose_action,dify,$(DIFY_COMPOSE),down -v)
 	@docker network inspect sandbox >/dev/null 2>&1 \
 		&& (docker network rm sandbox >/dev/null && echo "network sandbox removed") \
 		|| echo "network sandbox not found"
