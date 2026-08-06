@@ -8,6 +8,7 @@ make
 /
 ├── _common                               # 共通コマンド
 │   └── _setup_all                        # 必要な環境構築処理を順番に実行
+│
 ├── wsl                                   # WSL・Ollama環境の管理
 │   ├── wsl-tool-install                  # 開発環境ツールのインストール
 │   ├── wsl-git_lfs-setup                 # Git LFSの設定
@@ -19,7 +20,10 @@ make
 ├── docker                                # Docker環境の管理
 │   ├── docker-up                         # コンテナを起動
 │   ├── docker-down                       # コンテナを停止
-│   └── docker-purge                      # コンテナ・イメージ等を削除
+│   ├── docker-purge                      # コンテナ・イメージ等を削除
+│   ├── docker-build                      # イメージを作成（全体）
+│   ├── docker-one-build                  # イメージを作成（個別）
+│   └── docker-one-restart                # コンテナを再起動（個別）
 │
 ├── dify                                  # Dify環境の管理
 │   ├── dify-git-pull                     # 最新ソースを取得
