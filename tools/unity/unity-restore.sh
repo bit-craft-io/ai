@@ -28,7 +28,7 @@ if [[ ! -d "${UNITY_BACKUP_DIR}/Assets" ]]; then
 fi
 
 if [[ ! -d "${UNITY_PROJECT_DIR}/Assets" ]]; then
-  echo "Error: ${UNITY_PROJECT_DIR} is not a Unity project. Create it via Unity Hub first." >&2
+  echo "Error: ${UNITY_PROJECT_DIR} is not a valid Unity project. Create it via Unity Hub first." >&2
   exit 1
 fi
 
@@ -39,11 +39,16 @@ if [[ "$APPLY" == false ]]; then
 fi
 
 echo ""
-echo "=== Restoring project files ==="
-rm -rf "${UNITY_PROJECT_DIR}/Assets" "${UNITY_PROJECT_DIR}/ProjectSettings" "${UNITY_PROJECT_DIR}/Packages"
-cp -r "${UNITY_BACKUP_DIR}/Assets" "${UNITY_PROJECT_DIR}/"
-cp -r "${UNITY_BACKUP_DIR}/ProjectSettings" "${UNITY_PROJECT_DIR}/"
-cp -r "${UNITY_BACKUP_DIR}/Packages" "${UNITY_PROJECT_DIR}/"
+echo "=== Restoring project files (Overwriting) ==="
+rsync -a --info=progress2 "${UNITY_BACKUP_DIR}/Assets" "${UNITY_PROJECT_DIR}/"
+rsync -a --info=progress2 "${UNITY_BACKUP_DIR}/ProjectSettings" "${UNITY_PROJECT_DIR}/"
+rsync -a --info=progress2 "${UNITY_BACKUP_DIR}/Packages" "${UNITY_PROJECT_DIR}/"
+
+# LastSceneManagerSetup.txt の復元（存在する場合のみ）
+if [[ -f "${UNITY_BACKUP_DIR}/Library/LastSceneManagerSetup.txt" ]]; then
+  mkdir -p "${UNITY_PROJECT_DIR}/Library"
+  rsync -a "${UNITY_BACKUP_DIR}/Library/LastSceneManagerSetup.txt" "${UNITY_PROJECT_DIR}/Library/"
+fi
 
 echo ""
 echo "Completed"

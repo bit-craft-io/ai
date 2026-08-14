@@ -7,6 +7,7 @@ SHELL := /bin/bash
 # ----------------------------------------
 TASKS += \
 	unity-backup\
+	unity-backup-size \
 	unity-restore
 # ========================================
 # command
@@ -45,3 +46,14 @@ unity-restore:
 	@echo "--------------------------------------------------------------------------------"
 	@echo -e "$(CLR_GREEN) [OK] Successfully!$(CLR_RESET)"
 	@echo "--------------------------------------------------------------------------------"
+
+.PHONY: unity-backup-size
+unity-backup-size:
+	@echo "--------------------------------------------------------------------------------"
+	@echo "Unity backup size"
+	@echo "--------------------------------------------------------------------------------"
+	@if [ -d "$(UNITY_BACKUP_DIR)" ]; then \
+		du -sh "$(UNITY_BACKUP_DIR)"; \
+	else \
+		echo "Backup directory ($(UNITY_BACKUP_DIR)) does not exist."; \
+	fi

@@ -35,17 +35,33 @@ fi
 
 echo ""
 echo "=== Cleaning old backup ==="
-rm -rf "$UNITY_BACKUP_DIR"
+#rm -rfv "$UNITY_BACKUP_DIR"
+if [[ -d "$UNITY_BACKUP_DIR" ]]; then
+  for item in "$UNITY_BACKUP_DIR"/*; do
+    if [[ -e "$item" ]]; then
+      echo "  Deleting $(basename "$item")..."
+      rm -rf "$item"
+    fi
+  done
+fi
 mkdir -p "$UNITY_BACKUP_DIR"
 
 echo ""
 echo "=== Copying project files ==="
-cp -r "${UNITY_PROJECT_DIR}/Assets" "${UNITY_BACKUP_DIR}/"
-cp -r "${UNITY_PROJECT_DIR}/ProjectSettings" "${UNITY_BACKUP_DIR}/"
+rsync -a --info=progress2 "${UNITY_PROJECT_DIR}/Assets" "${UNITY_BACKUP_DIR}/"
+rsync -a --info=progress2 "${UNITY_PROJECT_DIR}/ProjectSettings" "${UNITY_BACKUP_DIR}/"
 
 mkdir -p "${UNITY_BACKUP_DIR}/Packages"
-cp "${UNITY_PROJECT_DIR}/Packages/manifest.json" "${UNITY_BACKUP_DIR}/Packages/"
-cp "${UNITY_PROJECT_DIR}/Packages/packages-lock.json" "${UNITY_BACKUP_DIR}/Packages/" 2>/dev/null || true
+rsync -a "${UNITY_PROJECT_DIR}/Packages/manifest.json" "${UNITY_BACKUP_DIR}/Packages/"
+if [[ -f "${UNITY_PROJECT_DIR}/Packages/packages-lock.json" ]]; then
+  rsync -a "${UNITY_PROJECT_DIR}/Packages/packages-lock.json" "${UNITY_BACKUP_DIR}/Packages/"
+fi
+
+# LastSceneManagerSetup.txt のコピー（存在する場合のみ）
+if [[ -f "${UNITY_PROJECT_DIR}/Library/LastSceneManagerSetup.txt" ]]; then
+  mkdir -p "${UNITY_BACKUP_DIR}/Library"
+  rsync -a "${UNITY_PROJECT_DIR}/Library/LastSceneManagerSetup.txt" "${UNITY_BACKUP_DIR}/Library/"
+fi
 
 # 不要なフォント元素材の削除
 find "${UNITY_BACKUP_DIR}/Assets" -type f \( -name "*.ttc" -o -name "*.otf" -o -name "*.ttf" \) -delete
