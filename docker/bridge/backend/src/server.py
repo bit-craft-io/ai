@@ -37,6 +37,7 @@ DIFY_STATE_ENDPOINT = settings.dify_state_endpoint
 DIFY_TIMEOUT_SEC = settings.dify_timeout_sec
 WEBSOCKET_PORT = settings.websocket_port
 VOICEVOX_URL = settings.voicevox_url
+VOICEVOX_SPEAKER_ID=settings.voicevox_speaker_id
 VOICEVOX_SPEED_SCALE = settings.voicevox_speed_scale
 
 SENTENCE_ENDINGS = re.compile(r"(.*?[。！？\n])")
@@ -261,7 +262,12 @@ class DifyWSServer:
         print(f"[Send Sentence]: {sentence}")
         await websocket.send(json.dumps({"type": "speech_text", "text": sentence}, ensure_ascii=False))
         wav_bytes = await loop.run_in_executor(
-            None, partial(_text_to_voicevox_wav, sentence, speaker_id=1, speed_scale=VOICEVOX_SPEED_SCALE)
+            None, partial(
+                _text_to_voicevox_wav,
+                sentence,
+                speaker_id=VOICEVOX_SPEAKER_ID,
+                speed_scale=VOICEVOX_SPEED_SCALE
+            )
         )
         if wav_bytes:
             await websocket.send(wav_bytes)
