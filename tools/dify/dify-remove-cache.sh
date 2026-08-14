@@ -1,5 +1,5 @@
 #!/bin/bash
-# dify-cache-check.sh
+# dify-remove-cache.sh
 # Dify plugin_daemon の plugin_packages キャッシュから、
 # DB(dify_plugin)上どの *_installations テーブルにも紐付いてない
 # 孤児 .difypkg を検出・削除する。
@@ -12,8 +12,8 @@
 #   DIFY_VOLUMES_DIR    (例: docker/dify/docker/volumes)
 #
 # 使い方:
-#   bash dify-cache-check.sh              # dry-run(一覧表示のみ)
-#   bash dify-cache-check.sh --apply       # 実削除
+#   bash dify-remove-cache.sh              # dry-run(一覧表示のみ)
+#   bash dify-remove-cache.sh --apply       # 実削除
 
 set -euo pipefail
 

@@ -28,7 +28,7 @@ make
 ├── dify                                  # Dify環境の管理
 │   ├── dify-git-pull                     # 最新ソースを取得
 │   ├── dify-git-destroy                  # Git管理を初期化
-│   ├── dify-cache-remove                 # キャッシュを削除
+│   ├── dify-remove-cache                 # キャッシュを削除
 │   ├── dify-backup                       # バックアップを作成
 │   ├── dify-backup-size                  # バックアップ容量を表示
 │   ├── dify-backup-list                  # バックアップ一覧を表示
