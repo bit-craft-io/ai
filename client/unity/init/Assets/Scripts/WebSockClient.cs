@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using NativeWebSocket;
 using System.Text;
@@ -9,17 +10,21 @@ using UnityEngine.UI;
 public class WebSockClient : MonoBehaviour
 {
     [SerializeField] private WebSockStreamPlayer streamPlayer;
-    [SerializeField] private InputField inputField;
     [SerializeField] private Text readField;
     [SerializeField] private Button btnRequest;
     [SerializeField] private Text answerText;
     [SerializeField] private FocalPointSwitcher focalPointSwitcher;
     
     private WebSocket _ws;
+    private readonly Queue<string> _textQueue = new(); // クリップ開始と同期表示するテキストキュー
+    private bool _isWatchingPlayback;
 
     async void Start()
     {
+        answerText.text = "";
+        readField.text = "";
         btnRequest?.onClick.AddListener(SendInputText);
+        streamPlayer.OnClipStart += HandleClipStart;
         
         // まずインスタンスを生成
         _ws = new WebSocket("ws://localhost:8765");
@@ -50,7 +55,8 @@ public class WebSockClient : MonoBehaviour
                     var obj = JsonUtility.FromJson<ResChat>(response);
                     if (!string.IsNullOrEmpty(obj.text)) // フィールド名要確認
                     {
-                        answerText.text = obj.text;
+                        // 表示はしない、クリップ開始タイミングに合わせてキューから出す
+                        _textQueue.Enqueue(obj.text);
                         focalPointSwitcher.Enable();
                     }
                 }
@@ -72,8 +78,11 @@ public class WebSockClient : MonoBehaviour
                 streamPlayer.EnqueueAudio(clip);
             }
 
-            // focalPointSwitcher.Disable()
-            StartCoroutine(FocalPointSwitcherDisable());
+            // ターン終了監視は多重起動しない(既に監視中ならスキップ)
+            if (!_isWatchingPlayback)
+            {
+                StartCoroutine(WatchPlaybackEnd());
+            }
         };
 
         // サーバーへ接続開始
@@ -92,10 +101,6 @@ public class WebSockClient : MonoBehaviour
 
     public async void SendInputText()
     {
-        // if (inputField == null) return;
-        //
-        // string message = inputField.text; // 「New Text」に入力された文字を取得
-        
         if (readField == null) return;
 
         // TODO dummy
@@ -122,14 +127,26 @@ public class WebSockClient : MonoBehaviour
         }
         
         btnRequest.onClick.RemoveListener(SendInputText);
+        streamPlayer.OnClipStart -= HandleClipStart;
     }
     
-    private IEnumerator FocalPointSwitcherDisable()
+    /// <summary>クリップ再生開始と同期してテキスト表示切替</summary>
+    private void HandleClipStart()
     {
+        if (_textQueue.Count > 0)
+        {
+            answerText.text = _textQueue.Dequeue();
+        }
+    }
+
+    private IEnumerator WatchPlaybackEnd()
+    {
+        _isWatchingPlayback = true;
+
         // 少し待って再生開始を確実に検知（キュー投入直後のフレーム対策）
         yield return new WaitForSeconds(0.1f);
 
-        // 再生中＆キューがある間待機
+        // 再生中＆キューがある間待機(全チャンク再生完了まで)
         while (streamPlayer.IsPlaying)
         {
             yield return null;
@@ -137,5 +154,8 @@ public class WebSockClient : MonoBehaviour
         
         yield return new WaitForSeconds(1.0f);
         focalPointSwitcher?.Disable();
+        answerText.text = "";
+
+        _isWatchingPlayback = false;
     }
 }

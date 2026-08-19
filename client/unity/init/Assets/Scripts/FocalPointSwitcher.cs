@@ -8,7 +8,7 @@ public class FocalPointSwitcher : MonoBehaviour
     [SerializeField] private CinemachineCamera vcam;
     [SerializeField] private Transform focalPoint;
     [SerializeField] private Transform focalPointR;
-    [SerializeField] private Button btnRequest;
+    [SerializeField] private Button btnDebug;
     [SerializeField] private GameObject answerUI;
 
     private bool _isSwitched = false;
@@ -28,7 +28,7 @@ public class FocalPointSwitcher : MonoBehaviour
 
     private void Start()
     {
-        btnRequest?.onClick.AddListener(OnButtonPress);
+        btnDebug?.onClick.AddListener(OnButtonPress);
         answerUI?.SetActive(_isSwitched);
     }
 
