@@ -177,28 +177,29 @@ dify-backup-size:
 
 __DIFY_ENV = DIFY_COMPOSE_FILE=$(__DIFY_COMPOSE_FILE) \
 	DIFY_DB_CONTAINER=$(__DIFY_DB_CONTAINER) \
+	DIFY_RAG_CONTAINER=$(__DIFY_RAG_CONTAINER) \
 	DIFY_DB_USER=$(__DIFY_DB_USER) \
 	DIFY_DB_NAME=$(__DIFY_DB_NAME) \
 	DIFY_DB_NAME_PLUGIN=$(__DIFY_DB_NAME_PLUGIN) \
 	DIFY_VOLUMES_DIR=$(__DIFY_VOLUMES_DIR)
-.PHONY: dify-cache-remove
-dify-cache-remove:
+.PHONY: dify-remove-cache
+dify-remove-cache:
 	@echo "--------------------------------------------------------------------------------"
 	@echo "cache clear dry-run"
 	@echo "--------------------------------------------------------------------------------"
-	$(__DIFY_ENV) bash tools/dify-cache-check.sh
+	$(__DIFY_ENV) bash tools/dify/dify-remove-cache.sh
 	@read -p "This will permanently delete orphaned plugin cache files. Continue? [y/N]: " ans; \
 	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
 	   echo "Cancelled."; \
 	   exit 0; \
 	fi; \
-	$(__DIFY_ENV) bash tools/dify-cache-check.sh --apply
+	$(__DIFY_ENV) bash tools/dify/dify-remove-cache.sh --apply
 	@echo "--------------------------------------------------------------------------------"
-	@echo -e "$(CLR_GREEN) [OK] Cache remove Successfully!$(CLR_RESET)"
+	@echo -e "$(CLR_GREEN) [OK] Successfully!$(CLR_RESET)"
 	@echo "--------------------------------------------------------------------------------"
 
-.PHONY: dify-files-remove-orphan
-dify-files-remove-orphan:
+.PHONY: dify-orphan-remove-file
+dify-orphan-remove-file:
 	@API_CONTAINER=$$(docker compose -f $(__DIFY_COMPOSE_FILE) ps -q api); \
 	echo "--------------------------------------------------------------------------------"; \
 	echo "orphaned file cleanup (DB + storage): dry-run"; \
@@ -215,25 +216,44 @@ dify-files-remove-orphan:
 	docker exec -it "$$API_CONTAINER" flask clear-orphaned-file-records -f; \
 	docker exec -it "$$API_CONTAINER" flask remove-orphaned-files-on-storage -f; \
 	echo "--------------------------------------------------------------------------------"; \
-	echo -e "$(CLR_GREEN) [OK] Orphaned file cleanup Successfully!$(CLR_RESET)"; \
+	@echo -e "$(CLR_GREEN) [OK] Successfully!$(CLR_RESET)"
 	echo "--------------------------------------------------------------------------------"
 
-.PHONY: dify-files-remove-website
-dify-files-remove-website:
+.PHONY: dify-orphan-remove-crawl
+dify-orphan-remove-crawl:
 	@echo "--------------------------------------------------------------------------------"
-	@echo "website_files cleanup: dry-run (with documents-count safety check)"
+	@echo "orphan remove crawl dry-run (with documents-count safety check)"
 	@echo "--------------------------------------------------------------------------------"
-	$(__DIFY_ENV) bash tools/dify-files-check-website.sh
-	@read -p "This will permanently delete website_files. Continue? [y/N]: " ans; \
+	$(__DIFY_ENV) bash tools/dify/dify-orphan-remove-crawl.sh
+	@read -p "This will permanently delete crawl_files. Continue? [y/N]: " ans; \
 	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
 	   echo "Cancelled."; \
 	   exit 0; \
 	fi; \
-	$(__DIFY_ENV) bash tools/dify-files-check-website.sh --apply
+	$(__DIFY_ENV) bash tools/dify/dify-orphan-remove-crawl.sh --apply
 	@echo "--------------------------------------------------------------------------------"
-	@echo -e "$(CLR_GREEN) [OK] website_files remove Successfully!$(CLR_RESET)"
+	@echo -e "$(CLR_GREEN) [OK] Successfully!$(CLR_RESET)"
+	@echo "--------------------------------------------------------------------------------"
+
+.PHONY: dify-orphan-remove-rag
+dify-orphan-remove-rag:
+	@echo "--------------------------------------------------------------------------------"
+	@echo "orphan remove rag dry-run (with documents-count safety check)"
+	@echo "--------------------------------------------------------------------------------"
+	$(__DIFY_ENV) bash tools/dify/dify-orphan-remove-rag.sh
+	@read -p "This will permanently delete rag. Continue? [y/N]: " ans; \
+	if [ "$$ans" != "y" ] && [ "$$ans" != "yes" ]; then \
+	   echo "Cancelled."; \
+	   exit 0; \
+	fi; \
+	$(__DIFY_ENV) bash tools/dify/dify-orphan-remove-rag.sh --apply
+	@echo "--------------------------------------------------------------------------------"
+	@echo -e "$(CLR_GREEN) [OK] Successfully!$(CLR_RESET)"
 	@echo "--------------------------------------------------------------------------------"
 
 .PHONY: dify-cleanup-all
-dify-cleanup-all: dify-files-remove-orphan dify-files-remove-website dify-cache-remove
+dify-cleanup-all: dify-orphan-remove-file \
+	dify-orphan-remove-crawl \
+	dify-orphan-remove-rag \
+	dify-remove-cache
 	@echo -e "$(CLR_GREEN) [OK] All Dify cleanup tasks completed!$(CLR_RESET)"

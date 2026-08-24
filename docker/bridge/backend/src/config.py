@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     websocket_port: int = 8765
 
+    voicevox_speaker_id: int = 1
     voicevox_speed_scale: float = 1.0
 
     class Config:

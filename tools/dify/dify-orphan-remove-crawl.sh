@@ -13,11 +13,11 @@ echo "documents count: $DOC_COUNT"
 
 if [ "$DOC_COUNT" -ne 0 ]; then
   echo "[ABORT] documents table is not empty (${DOC_COUNT} rows)."
-  echo "        website_files may still be referenced. Skipping deletion."
-  exit 1
+  echo "        crawl_files may still be referenced. Skipping deletion."
+  exit 0
 fi
 
-TARGET_DIR="${DIFY_VOLUMES_DIR}/app/storage/website_files"
+TARGET_DIR="${DIFY_VOLUMES_DIR}/app/storage/crawl_files"
 
 if [ ! -d "$TARGET_DIR" ]; then
   echo "[SKIP] ${TARGET_DIR} does not exist."
